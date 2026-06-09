@@ -44,4 +44,4 @@ def render_template(request: Request, db: Session, template_name: str, context: 
     messages = request.session.pop("flash_messages", [])
     context["messages"] = messages
     
-    return templates.TemplateResponse(template_name, context)
+    return templates.TemplateResponse(request, template_name, context)
