@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}{% if edit_mode %}Editar{% else %}Crear{% endif %} Torneo - Lercup Torneos{% endblock %}
+{% block content %}
+<div class="auth-wrapper" style="max-width: 600px;">
+    <div class="card">
+        <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem; text-align: center;">
+            {% if edit_mode %}Editar Torneo{% else %}Crear Nuevo Torneo{% endif %}
+        </h1>
+        <p style="color: var(--text-muted); text-align: center; margin-bottom: 2rem;">
+            Configure los detalles del torneo de tenis.
+        </p>
+
+        <form action="{% if edit_mode %}/tournaments/edit/{{ tournament.id }}{% else %}/tournaments/create{% endif %}" method="post">
+            <div class="form-group">
+                <label for="name">Nombre del Torneo</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="Ej. Abierto de Primavera Lercup" required value="{% if edit_mode %}{{ tournament.name }}{% else %}{{ name or '' }}{% endif %}">
+            </div>
+
+            <div class="form-group">
+                <label for="description">Descripción</label>
+                <textarea id="description" name="description" class="form-control" rows="3" placeholder="Información del torneo, premios, etc.">{% if edit_mode %}{{ tournament.description or '' }}{% else %}{{ description or '' }}{% endif %}</textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="start_date">Fecha de Inicio</label>
+                    <input type="date" id="start_date" name="start_date" class="form-control" required value="{% if edit_mode %}{{ start_date_str }}{% endif %}">
+                </div>
+
+                <div class="form-group">
+                    <label for="end_date">Fecha de Fin</label>
+                    <input type="date" id="end_date" name="end_date" class="form-control" required value="{% if edit_mode %}{{ end_date_str }}{% endif %}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="format_id">Formato de Competición *</label>
+                <select id="format_id" name="format_id" class="form-control" required>
+                    <option value="" disabled {% if not edit_mode or not tournament.format_id %}selected{% endif %}>Seleccione un formato...</option>
+                    {% for fmt in formats %}
+                    <option value="{{ fmt.id }}" {% if edit_mode and tournament.format_id == fmt.id %}selected{% endif %}>{{ fmt.name }}</option>
+                    {% endfor %}
+                </select>
+                <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem; display: block;">
+                    ¿No encuentras el formato que necesitas? <a href="/tournaments/formats" style="color: var(--accent-color); text-decoration: underline;">Gestiona los formatos aquí</a>.
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="category">Categoría Requerida</label>
+                <select id="category" name="category" class="form-control">
+                    <option value="flexible" {% if (edit_mode and tournament.category == 'flexible') or (not edit_mode and category == 'flexible') or (not edit_mode and not category) %}selected{% endif %}>Flexible (Cualquier categoría)</option>
+                    <option value="Primera" {% if (edit_mode and tournament.category == 'Primera') or (not edit_mode and category == 'Primera') %}selected{% endif %}>Primera</option>
+                    <option value="A" {% if (edit_mode and tournament.category == 'A') or (not edit_mode and category == 'A') %}selected{% endif %}>A</option>
+                    <option value="B1" {% if (edit_mode and tournament.category == 'B1') or (not edit_mode and category == 'B1') %}selected{% endif %}>B1</option>
+                    <option value="B2" {% if (edit_mode and tournament.category == 'B2') or (not edit_mode and category == 'B2') %}selected{% endif %}>B2</option>
+                    <option value="C" {% if (edit_mode and tournament.category == 'C') or (not edit_mode and category == 'C') %}selected{% endif %}>C</option>
+                    <option value="D" {% if (edit_mode and tournament.category == 'D') or (not edit_mode and category == 'D') %}selected{% endif %}>D</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="surface">Superficie</label>
+                    <select id="surface" name="surface" class="form-control">
+                        <option value="clay" {% if edit_mode and tournament.surface == 'clay' %}selected{% endif %}>Clay (Polvo de Ladrillo)</option>
+                        <option value="grass" {% if edit_mode and tournament.surface == 'grass' %}selected{% endif %}>Grass (Césped)</option>
+                        <option value="hard" {% if edit_mode and tournament.surface == 'hard' %}selected{% endif %}>Hard (Cemento)</option>
+                        <option value="indoor" {% if edit_mode and tournament.surface == 'indoor' %}selected{% endif %}>Indoor (Cubierto)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Estado del Torneo</label>
+                    <select id="status" name="status" class="form-control">
+                        <option value="draft" {% if edit_mode and tournament.status == 'draft' %}selected{% endif %}>Draft (Borrador)</option>
+                        <option value="ongoing" {% if edit_mode and tournament.status == 'ongoing' %}selected{% endif %}>Ongoing (En Progreso)</option>
+                        <option value="finished" {% if edit_mode and tournament.status == 'finished' %}selected{% endif %}>Finished (Finalizado)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <a href="/tournaments" class="btn btn-outline" style="flex: 1; text-align: center;">Cancelar</a>
+                <button type="submit" class="btn btn-primary" style="flex: 2;">Guardar Torneo</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

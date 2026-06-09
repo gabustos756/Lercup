@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{% if format %}Editar Formato{% else %}Nuevo Formato{% endif %} - Lercup{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper" style="max-width: 600px; margin: 2rem auto;">
+    <div class="card">
+        <h2 style="margin-bottom: 0.5rem; text-align: center;">{% if format %}Editar Formato{% else %}Nuevo Formato{% endif %}</h2>
+        <p style="color: var(--text-muted); text-align: center; margin-bottom: 2rem; font-size: 0.95rem;">
+            Define las reglas y estructura para los cruces de jugadores en tu torneo.
+        </p>
+        
+        <form action="{% if format %}/tournaments/formats/edit/{{ format.id }}{% else %}/tournaments/formats/create{% endif %}" method="POST" id="formatForm">
+            <div class="form-group">
+                <label for="name">Nombre del Formato *</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="Ej. 10 Jugadores: Fase de Grupos + Copas" value="{% if format %}{{ format.name }}{% endif %}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Descripción</label>
+                <textarea id="description" name="description" class="form-control" rows="3" placeholder="Explica cómo se estructurará el torneo con este formato.">{% if format %}{{ format.description or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="format_type">Tipo de Estructura *</label>
+                <select id="format_type" name="format_type" class="form-control" required onchange="toggleFormatFields()">
+                    <option value="groups_to_playoffs" {% if format and format.format_type == 'groups_to_playoffs' %}selected{% endif %}>Fase de Grupos + Eliminatoria (Copas)</option>
+                    <option value="elimination_with_consolation" {% if format and format.format_type == 'elimination_with_consolation' %}selected{% endif %}>Eliminación Directa con Consolación (Copa de Plata)</option>
+                </select>
+            </div>
+            
+            <!-- Fields for Groups -> Playoffs -->
+            <div id="groupsSection" style="border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 1.25rem; margin-bottom: 1.5rem; background-color: #fafafa;">
+                <h4 style="margin-top: 0; margin-bottom: 1rem; font-size: 1rem; color: var(--primary-color);">Configuración de Fase de Grupos</h4>
+                
+                <div class="form-group">
+                    <label for="groups_count">Cantidad de Grupos</label>
+                    <input type="number" id="groups_count" name="groups_count" class="form-control" min="1" max="10" value="{% if format %}{{ format.groups_count }}{% else %}2{% endif %}">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+                    <div class="form-group">
+                        <label for="gold_qualifiers">Clasificados Oro (por grupo)</label>
+                        <input type="number" id="gold_qualifiers" name="gold_qualifiers" class="form-control" min="0" value="{% if format %}{{ format.gold_qualifiers }}{% else %}2{% endif %}">
+                    </div>
+                    <div class="form-group">
+                        <label for="silver_qualifiers">Clasificados Plata (por grupo)</label>
+                        <input type="number" id="silver_qualifiers" name="silver_qualifiers" class="form-control" min="0" value="{% if format %}{{ format.silver_qualifiers }}{% else %}2{% endif %}">
+                    </div>
+                    <div class="form-group">
+                        <label for="bronze_qualifiers">Clasificados Bronce (por grupo)</label>
+                        <input type="number" id="bronze_qualifiers" name="bronze_qualifiers" class="form-control" min="0" value="{% if format %}{{ format.bronze_qualifiers }}{% else %}1{% endif %}">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fields for Elimination Direct -->
+            <div id="eliminationSection" style="border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 1.25rem; margin-bottom: 1.5rem; background-color: #fafafa; display: none;">
+                <h4 style="margin-top: 0; margin-bottom: 1rem; font-size: 1rem; color: var(--primary-color);">Configuración de Eliminatoria</h4>
+                
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0;">
+                    <input type="checkbox" id="has_third_place" name="has_third_place" value="true" {% if not format or format.has_third_place %}checked{% endif %} style="width: 18px; height: 18px; cursor: pointer;">
+                    <label for="has_third_place" style="margin-bottom: 0; cursor: pointer;">¿Incluir partido por el 3° Puesto?</label>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <a href="/tournaments/formats" class="btn btn-outline" style="flex: 1; text-align: center;">Cancelar</a>
+                <button type="submit" class="btn btn-primary" style="flex: 2;">Guardar Formato</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleFormatFields() {
+        const typeSelect = document.getElementById('format_type');
+        const groupsSection = document.getElementById('groupsSection');
+        const eliminationSection = document.getElementById('eliminationSection');
+        
+        if (typeSelect.value === 'groups_to_playoffs') {
+            groupsSection.style.display = 'block';
+            eliminationSection.style.display = 'none';
+        } else {
+            groupsSection.style.display = 'none';
+            eliminationSection.style.display = 'block';
+        }
+    }
+    
+    // Run on load to set correct visible section
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleFormatFields();
+    });
+</script>
+{% endblock %}

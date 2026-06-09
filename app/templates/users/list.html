@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Usuarios - Lercup Torneos{% endblock %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1>Jugadores y Usuarios</h1>
+        <p style="color: var(--text-muted);">Listado de todos los competidores registrados en la plataforma.</p>
+    </div>
+    {% if current_user and current_user.is_admin %}
+        <a href="/users/create" class="btn btn-primary">➕ Crear Usuario</a>
+    {% endif %}
+</div>
+
+{% if users %}
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Jugador</th>
+                    <th>Ciudad</th>
+                    <th>Rol</th>
+                    <th>Registro</th>
+                    <th style="text-align: right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                {% if u.avatar_url %}
+                                    <img src="{{ u.avatar_url }}" alt="Avatar" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-light);">
+                                {% else %}
+                                    <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background-color: var(--primary-light); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; border: 2px solid var(--primary-light);">
+                                        {{ u.full_name[:2] }}
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <div style="font-weight: 700; color: var(--primary-color);">{{ u.full_name }}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ u.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="font-weight: 500;">{{ u.city or '—' }}</span>
+                        </td>
+                        <td>
+                            {% if u.role == 'admin' or u.is_admin %}
+                                <span class="badge" style="background-color: var(--accent-color); color: white;">Admin</span>
+                            {% elif u.role == 'tournament_admin' %}
+                                <span class="badge" style="background-color: var(--primary-color); color: white;">Organizador</span>
+                            {% else %}
+                                <span class="badge" style="background-color: var(--primary-light); color: white;">Jugador</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td style="text-align: right;">
+                            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                                <a href="/users/profile/{{ u.id }}" class="btn btn-outline btn-sm">📊 Perfil</a>
+                                {% if current_user and current_user.is_admin %}
+                                    <a href="/users/edit/{{ u.id }}" class="btn btn-outline btn-sm" style="border-color: #cbd5e1;">✏️ Editar</a>
+                                    <form action="/users/delete/{{ u.id }}" method="post" style="display: inline; margin: 0;">
+                                        <button type="submit" class="btn btn-danger btn-sm btn-delete-confirm" data-confirm-message="¿Estás seguro de que deseas eliminar al usuario {{ u.full_name }}? Esto puede causar inconsistencia en los partidos jugados.">🗑️ Eliminar</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="card" style="text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
+        <p style="font-size: 2.5rem; margin-bottom: 1rem;">👥</p>
+        <h2>No hay usuarios</h2>
+        <p>Aún no hay usuarios registrados en el sistema.</p>
+    </div>
+{% endif %}
+{% endblock %}

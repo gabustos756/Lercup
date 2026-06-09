@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Perfil de {{ user.full_name }} - Lercup Torneos{% endblock %}
+{% block content %}
+<div class="grid-cols-1-2" style="margin-top: 1rem; gap: 2rem;">
+    <!-- Profile Card & Stats -->
+    <div>
+        <div class="card" style="text-align: center; padding: 2.5rem 1.5rem; margin-bottom: 1.5rem; position: relative; overflow: hidden;">
+            <!-- Subtle tennis court lines decor background -->
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background-color: var(--primary-color);"></div>
+            
+            <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+                {% if user.avatar_url %}
+                    <img src="{{ user.avatar_url }}" alt="Avatar" style="width: 6rem; height: 6rem; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-light); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                {% else %}
+                    <div style="width: 6rem; height: 6rem; border-radius: 50%; background-color: var(--primary-light); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 2.2rem; text-transform: uppercase; border: 3px solid var(--primary-light); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        {{ user.full_name[:2] }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <h2 style="margin-bottom: 0.25rem; font-size: 1.6rem;">{{ user.full_name }}</h2>
+            {% if profile and profile.nickname %}
+                <p style="color: var(--accent-color); font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem; font-style: italic;">"{{ profile.nickname }}"</p>
+            {% endif %}
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 0.5rem;">{{ user.email }}</p>
+            
+            {% if user.city or user.phone_number %}
+                <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; display: flex; flex-direction: column; align-items: center; gap: 0.35rem;">
+                    {% if user.city %}
+                        <p style="display: flex; align-items: center; gap: 0.25rem; margin: 0;">📍 {{ user.city }}</p>
+                    {% endif %}
+                    {% if user.phone_number %}
+                        <p style="display: flex; align-items: center; gap: 0.25rem; margin: 0;">📱 {{ user.phone_number }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                {% if user.role == 'admin' or user.is_admin %}
+                    <span class="badge" style="background-color: var(--accent-color); color: white; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: bold;">Administrador</span>
+                {% elif user.role == 'tournament_admin' %}
+                    <span class="badge" style="background-color: var(--primary-color); color: white; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: bold;">Organizador</span>
+                {% else %}
+                    <span class="badge" style="background-color: var(--primary-light); color: white; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: bold;">Jugador</span>
+                {% endif %}
+
+                {% if current_user and current_user.id == user.id %}
+                    <a href="/users/profile/edit" class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none; margin-top: 0.25rem;">
+                        ✏️ Editar Perfil
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Player Profile Stats (Tennis level and hand preference) -->
+            {% if profile %}
+                <div style="display: flex; justify-content: center; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem; margin-top: 1.25rem; font-size: 0.9rem;">
+                    <div style="flex: 1; text-align: center;">
+                        <span style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin-bottom: 0.25rem;">Categoría</span>
+                        <span style="font-weight: 700; color: var(--primary-color);">
+                            {{ profile.category or 'B2' }}
+                        </span>
+                    </div>
+                    <div style="width: 1px; background-color: var(--border-color);"></div>
+                    <div style="flex: 1; text-align: center;">
+                        <span style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin-bottom: 0.25rem;">Mano Hábil</span>
+                        <span style="font-weight: 700; color: var(--primary-color);">
+                            {% if profile.hand_preference == 'right' %}Diestro
+                            {% elif profile.hand_preference == 'left' %}Zurdo
+                            {% else %}{{ profile.hand_preference }}{% endif %}
+                        </span>
+                    </div>
+                </div>
+            {% endif %}
+
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">Miembro desde: {{ user.created_at.strftime('%d/%m/%Y') }}</p>
+        </div>
+
+        <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 0.75rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">Estadísticas de Juego</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-val">{{ stats.played }}</div>
+                <div class="stat-label">Jugados</div>
+            </div>
+            <div class="stat-card" style="border-top: 3px solid var(--success-color);">
+                <div class="stat-val" style="color: var(--success-color);">{{ stats.won }}</div>
+                <div class="stat-label">Victorias</div>
+            </div>
+            <div class="stat-card" style="border-top: 3px solid var(--danger-color);">
+                <div class="stat-val" style="color: var(--danger-color);">{{ stats.lost }}</div>
+                <div class="stat-label">Derrotas</div>
+            </div>
+            <div class="stat-card" style="border-top: 3px solid var(--primary-color);">
+                <div class="stat-val">{{ stats.win_rate }}%</div>
+                <div class="stat-label">Win Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match History -->
+    <div>
+        <h2 style="margin-bottom: 1.25rem;">Historial de Partidos</h2>
+        <div class="card" style="padding: 0; overflow: hidden;">
+            {% if matches %}
+                <div style="display: flex; flex-direction: column;">
+                    {% for m in matches %}
+                        <div class="match-item" style="padding: 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s;">
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 0.25rem;">
+                                    🏆 Torneo #{{ m.match.tournament_id }}
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.4rem;">
+                                    <span style="font-weight: 700; color: var(--primary-color);">{{ user.full_name }}</span>
+                                    <span style="color: var(--text-muted); font-size: 0.85rem;">vs</span>
+                                    <a href="/users/profile/{{ m.opponent_id }}" style="color: var(--text-color); font-weight: 600; text-decoration: none; border-bottom: 1px dashed var(--primary-light);">{{ m.opponent_name }}</a>
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">
+                                    📅 {{ m.match.match_date.strftime('%d/%m/%Y %H:%M') }}
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                                {% if m.is_winner %}
+                                    <span class="badge" style="background-color: #d1fae5; color: #065f46; font-weight: bold; font-size: 0.8rem;">Victoria</span>
+                                {% else %}
+                                    <span class="badge" style="background-color: #fee2e2; color: #991b1b; font-weight: bold; font-size: 0.8rem;">Derrota</span>
+                                {% endif %}
+                                <div class="match-score-badge" style="font-size: 0.95rem; font-weight: 700;">{{ m.score }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- Styled Empty State -->
+                <div style="text-align: center; padding: 5rem 2rem; color: var(--text-muted);">
+                    <div style="font-size: 4.5rem; margin-bottom: 1.5rem; animation: bounce 2s infinite;">🎾</div>
+                    <h3 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1.3rem;">¡Sin partidos jugados aún!</h3>
+                    <p style="max-width: 320px; margin: 0 auto; line-height: 1.5;">Este jugador aún no tiene partidos registrados en la plataforma. ¡Inscríbelo en un torneo para comenzar!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+.match-item:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+</style>
+{% endblock %}

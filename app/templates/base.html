@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Lercup Torneos{% endblock %}</title>
+    <!-- Outfit Font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Static Stylesheet -->
+    <link rel="stylesheet" href="/static/css/app.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="navbar">
+            <a href="/" class="nav-brand">
+                Lercup<span>🎾</span>
+            </a>
+            
+            <button class="menu-toggle" aria-expanded="false" aria-label="Abrir menú">☰</button>
+            
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/tournaments" class="nav-link {% if active_page == 'tournaments' %}active{% endif %}">Torneos</a></li>
+                    <li><a href="/users" class="nav-link {% if active_page == 'users' %}active{% endif %}">Usuarios</a></li>
+                    
+                    {% if current_user %}
+                        <li class="user-menu">
+                            <span class="user-badge">👤 {{ current_user.full_name }}</span>
+                            <a href="/users/profile/{{ current_user.id }}" class="nav-link {% if active_page == 'profile' %}active{% endif %}">Mi Perfil</a>
+                            <a href="/auth/logout" class="nav-link nav-btn">Salir</a>
+                        </li>
+                    {% else %}
+                        <li><a href="/auth/login" class="nav-link">Iniciar Sesión</a></li>
+                        <li><a href="/auth/register" class="nav-link nav-btn">Registrarse</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main>
+        <!-- Flash messages / Alerts -->
+        {% if messages %}
+            <div class="alerts-container">
+                {% for msg in messages %}
+                    <div class="alert alert-{{ msg.type }}">
+                        <span>{{ msg.text }}</span>
+                        <button class="close-btn">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Content Block -->
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Lercup - MVP de Gestión de Torneos de Tenis. Hecho con FastAPI + Jinja2 + SQLModel.</p>
+    </footer>
+
+    <!-- Static Script -->
+    <script src="/static/js/app.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

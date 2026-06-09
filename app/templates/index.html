@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Inicio - Lercup Torneos{% endblock %}
+{% block content %}
+<div class="welcome-hero" style="text-align: center; padding: 3.5rem 1.5rem; background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); color: white; border-radius: var(--border-radius); margin-bottom: 2rem; box-shadow: var(--shadow-lg);">
+    <h1 style="color: white; margin-bottom: 1rem; font-size: 2.75rem; font-weight: 800; letter-spacing: -0.03em;">Organiza tus Torneos de Tenis</h1>
+    <p style="font-size: 1.15rem; max-width: 600px; margin: 0 auto 2rem auto; opacity: 0.9; line-height: 1.6;">Lercup te permite registrar jugadores, seguir torneos en tiempo real, cargar resultados de partidos y analizar tus estadísticas de juego de manera ágil.</p>
+    {% if not current_user %}
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+            <a href="/auth/register" class="btn btn-secondary">Comenzar Gratis</a>
+            <a href="/auth/login" class="btn btn-outline" style="color: white; border-color: rgba(255,255,255,0.4); background: rgba(255, 255, 255, 0.1);">Iniciar Sesión</a>
+        </div>
+    {% else %}
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+            <a href="/tournaments" class="btn btn-secondary">Ver Torneos Activos</a>
+            <a href="/users/profile/{{ current_user.id }}" class="btn btn-outline" style="color: white; border-color: rgba(255,255,255,0.4); background: rgba(255, 255, 255, 0.1);">Ver Mis Estadísticas</a>
+        </div>
+    {% endif %}
+</div>
+
+<div class="grid-cols-1-2" style="margin-top: 2rem;">
+    <!-- Column 1: Quick info / CTA -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid var(--accent-color);">
+        <div>
+            <h2 class="card-title">🎾 Cómo Funciona</h2>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 1.25rem; margin-top: 1.25rem;">
+                <li style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <span style="background: #e0f2fe; color: #0369a1; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; flex-shrink: 0; font-size: 0.9rem;">1</span>
+                    <div>
+                        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.15rem;">Crea un Perfil:</strong> Regístrate como jugador en la plataforma para empezar a figurar en los rankings.
+                    </div>
+                </li>
+                <li style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <span style="background: #ffedd5; color: #ea580c; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; flex-shrink: 0; font-size: 0.9rem;">2</span>
+                    <div>
+                        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.15rem;">Crea Torneos:</strong> Define el nombre, las fechas, la superficie (arcilla, césped, cemento, indoor) y el estado.
+                    </div>
+                </li>
+                <li style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <span style="background: #dcfce7; color: #15803d; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; flex-shrink: 0; font-size: 0.9rem;">3</span>
+                    <div>
+                        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.15rem;">Registra Partidos:</strong> Carga los enfrentamientos y puntajes para actualizar automáticamente el win rate y las victorias/derrotas de los jugadores.
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Column 2: Recent Tournaments -->
+    <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h2>🏆 Torneos Recientes</h2>
+            <a href="/tournaments" style="font-size: 0.95rem; color: var(--primary-light); font-weight: 600; text-decoration: none;">Ver todos &rarr;</a>
+        </div>
+        
+        {% if tournaments %}
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for t in tournaments[:3] %}
+                    <div class="card" style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                        <div>
+                            <h3 style="font-size: 1.15rem; color: var(--primary-color); font-weight: 700;">{{ t.name }}</h3>
+                            <div class="card-meta" style="margin-bottom: 0; margin-top: 0.25rem;">
+                                <span>📅 {{ t.start_date.strftime('%d/%m/%Y') }}</span>
+                                <span>🏟️ <span class="badge badge-{{ t.surface }}" style="font-size:0.65rem; padding: 0.1rem 0.35rem;">{{ t.surface }}</span></span>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span class="badge badge-{{ t.status }}">{{ t.status }}</span>
+                            <a href="/tournaments/detail/{{ t.id }}" class="btn btn-outline btn-sm">Ver Detalle</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card" style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted); border-style: dashed; border-width: 2px;">
+                <p style="font-size: 2rem; margin-bottom: 0.5rem;">🎾</p>
+                <p style="font-weight: 500;">Aún no hay torneos creados.</p>
+                {% if current_user and current_user.is_admin %}
+                    <a href="/tournaments/create" class="btn btn-secondary btn-sm" style="margin-top: 1rem;">Crear Primer Torneo</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+{% block title %}{{ tournament.name }} - Lercup Torneos{% endblock %}
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="/tournaments" style="color: var(--primary-light); font-weight: 600; text-decoration: none;">&larr; Volver al listado</a>
+</div>
+
+<div class="grid-cols-1-2">
+    <!-- Left Column -->
+    <div>
+        <div class="card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--primary-color);">
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                <span class="badge badge-{{ tournament.surface }}">{{ tournament.surface }}</span>
+                <span class="badge badge-{{ tournament.status }}">{{ tournament.status }}</span>
+                <span class="badge" style="background-color: var(--accent-color); color: white;">Categoría: {{ tournament.category | upper }}</span>
+                <span class="badge" style="background-color: var(--primary-light); color: white;">👥 {{ progress.registered_count }} inscriptos</span>
+            </div>
+            <h1>{{ tournament.name }}</h1>
+            <p style="font-size: 1rem; color: var(--text-color); margin-bottom: 1.5rem;">
+                {{ tournament.description or 'Sin descripción disponible.' }}
+            </p>
+            <div class="card-meta" style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-bottom: 0;">
+                <span>📅 <strong>Inicio:</strong> {{ tournament.start_date.strftime('%d/%m/%Y') }}</span>
+                <span>📅 <strong>Fin:</strong> {{ tournament.end_date.strftime('%d/%m/%Y') }}</span>
+            </div>
+            {% if tournament.format %}
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.75rem; margin-bottom: 0;">
+                    <strong>Formato:</strong> {{ tournament.format.name }}
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- Registered Players (visible to all) -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">👥 Jugadores Inscriptos</h3>
+
+            {% set ns = namespace(is_registered=false) %}
+            {% for reg in registrations %}
+                {% if reg.user.id == current_user.id %}
+                    {% set ns.is_registered = true %}
+                {% endif %}
+            {% endfor %}
+
+            {% if not ns.is_registered and progress.registrations_open %}
+                <form action="/tournaments/detail/{{ tournament.id }}/register" method="POST" style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; font-weight: bold;">
+                        📝 Inscribirme a este Torneo
+                    </button>
+                </form>
+            {% elif not progress.registrations_open and not ns.is_registered %}
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; padding: 0.5rem 0.75rem; background: var(--primary-xlight); border-radius: var(--border-radius-sm);">
+                    🔒 Inscripciones cerradas
+                </p>
+            {% endif %}
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                {% for reg in registrations %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; {% if not loop.last %}border-bottom: 1px solid var(--border-color);{% endif %}">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <a href="/users/profile/{{ reg.user.id }}" style="font-weight: 600; font-size: 0.9rem; color: var(--text-color); text-decoration: none;">{{ reg.user.full_name }}</a>
+                            {% if reg.group_label %}
+                                <span class="badge badge-ongoing" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">Grupo {{ reg.group_label }}</span>
+                            {% elif progress.draw_done %}
+                                <span class="badge badge-draft" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">Sin grupo</span>
+                            {% endif %}
+                        </div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">{{ reg.registered_at.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1rem;">
+                        Aún no hay jugadores inscriptos.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Group Standings -->
+        {% if tournament.format and tournament.format.format_type == 'groups_to_playoffs' and progress.draw_done %}
+            <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+                <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 1.25rem;">📊 Posiciones de Grupos</h3>
+
+                {% for group_label, standings in [('A', standings_A), ('B', standings_B)] %}
+                    {% if standings %}
+                        <h4 style="font-size: 0.95rem; color: var(--accent-color); margin-bottom: 0.5rem;">Grupo {{ group_label }}</h4>
+                        <div class="table-responsive" style="margin-bottom: 1.5rem; box-shadow: none; border: 1px solid var(--border-color);">
+                            <table style="font-size: 0.85rem;">
+                                <thead>
+                                    <tr>
+                                        <th style="padding: 0.5rem 0.75rem; width: 2rem;">#</th>
+                                        <th style="padding: 0.5rem 0.75rem;">Jugador</th>
+                                        <th style="padding: 0.5rem 0.75rem; text-align: center;">PJ</th>
+                                        <th style="padding: 0.5rem 0.75rem; text-align: center;">PG</th>
+                                        <th style="padding: 0.5rem 0.75rem; text-align: center;">PP</th>
+                                        <th style="padding: 0.5rem 0.75rem; text-align: center;">Pts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in standings %}
+                                    <tr>
+                                        <td style="padding: 0.5rem 0.75rem; font-weight: bold; color: var(--text-muted);">{{ loop.index }}</td>
+                                        <td style="padding: 0.5rem 0.75rem; font-weight: 600;">{{ row.user.full_name }}</td>
+                                        <td style="padding: 0.5rem 0.75rem; text-align: center;">{{ row.played }}</td>
+                                        <td style="padding: 0.5rem 0.75rem; text-align: center; color: var(--success-color);">{{ row.won }}</td>
+                                        <td style="padding: 0.5rem 0.75rem; text-align: center; color: var(--danger-color);">{{ row.lost }}</td>
+                                        <td style="padding: 0.5rem 0.75rem; text-align: center; font-weight: bold;">{{ row.points }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+                {% if progress.has_group_matches and not progress.group_stage_complete %}
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; padding: 0.5rem 0.75rem; background: #fef3c7; border-radius: var(--border-radius-sm); color: #92400e;">
+                        ⏳ Fase de grupos en curso — faltan resultados por cargar.
+                    </p>
+                {% elif progress.group_stage_complete and not progress.has_playoffs %}
+                    <p style="font-size: 0.8rem; margin: 0; padding: 0.5rem 0.75rem; background: #d1fae5; border-radius: var(--border-radius-sm); color: #065f46;">
+                        ✅ Fase de grupos completada. Listo para generar las copas.
+                    </p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Playoff Bracket -->
+        {% if playoff_bracket %}
+            <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+                <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 1.25rem;">🏆 Cuadro de Playoffs</h3>
+                {% for cup, rounds in playoff_bracket.items() %}
+                    {% set cup_colors = {'Oro': '#d97706', 'Plata': '#475569', 'Bronce': '#b45309'} %}
+                    {% set cup_color = cup_colors.get(cup, 'var(--primary-color)') %}
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="font-size: 1rem; color: {{ cup_color }}; margin-bottom: 0.75rem;">
+                            {% if cup == 'Oro' %}🥇{% elif cup == 'Plata' %}🥈{% else %}🥉{% endif %}
+                            Copa de {{ cup }}
+                        </h4>
+                        <div class="bracket-tree">
+                            {% for round in rounds %}
+                                <div class="bracket-round">
+                                    <div class="bracket-round-label">{{ round.round_name }}</div>
+                                    {% for m in round.matches %}
+                                        <div class="bracket-match" style="border-left: 3px solid {{ cup_color }};">
+                                            <div class="bracket-player {% if m.winner and m.winner.id == m.player1.id %}bracket-winner{% endif %}">
+                                                {{ m.player1.full_name if m.player1 else '—' }}
+                                            </div>
+                                            <div class="bracket-player {% if m.winner and m.winner.id == m.player2.id %}bracket-winner{% endif %}">
+                                                {{ m.player2.full_name if m.player2 else '—' }}
+                                            </div>
+                                            <div class="bracket-score">{{ m.score or 'Pendiente' }}</div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
+            <!-- Admin Workflow -->
+            {% if tournament.format and tournament.format.format_type == 'groups_to_playoffs' %}
+                <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-color);">
+                    <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 0.75rem;">⚙️ Gestión del Torneo</h3>
+                    <div style="font-size: 0.85rem; margin-bottom: 1.25rem; padding: 0.75rem; background-color: var(--primary-xlight); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                        <strong>Formato:</strong> {{ tournament.format.name }}<br>
+                        <span style="color: var(--text-muted);">{{ tournament.format.description or '' }}</span>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <!-- Step 1: Close registrations -->
+                        <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); {% if progress.registrations_open %}background: #fffbeb;{% else %}background: #f0fdf4; opacity: 0.85;{% endif %}">
+                            <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted); margin-bottom: 0.35rem;">PASO 1 — Inscripciones</div>
+                            {% if progress.registrations_open %}
+                                <p style="font-size: 0.85rem; margin-bottom: 0.65rem; color: var(--text-muted);">Cerrá las inscripciones cuando tengas todos los jugadores confirmados.</p>
+                                <form action="/tournaments/detail/{{ tournament.id }}/close-registrations" method="POST" onsubmit="return confirm('¿Cerrar inscripciones? Los jugadores ya no podrán inscribirse.')">
+                                    <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;" {% if not progress.can_close_registrations %}disabled{% endif %}>
+                                        🔒 Cerrar Inscripciones
+                                    </button>
+                                </form>
+                            {% else %}
+                                <p style="font-size: 0.85rem; margin: 0; color: #065f46;">✅ Inscripciones cerradas</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Step 2: Draw -->
+                        <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); {% if progress.can_perform_draw %}background: #fffbeb;{% elif progress.draw_done %}background: #f0fdf4; opacity: 0.85;{% endif %}">
+                            <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted); margin-bottom: 0.35rem;">PASO 2 — Sorteo de Grupos</div>
+                            {% if progress.draw_done %}
+                                <p style="font-size: 0.85rem; margin: 0; color: #065f46;">✅ Sorteo realizado — grupos A y B asignados con fixture generado</p>
+                            {% elif progress.can_perform_draw %}
+                                <p style="font-size: 0.85rem; margin-bottom: 0.65rem; color: var(--text-muted);">Sorteo aleatorio que divide jugadores en 2 grupos y genera el fixture round-robin (todos contra todos).</p>
+                                <form action="/tournaments/detail/{{ tournament.id }}/perform-draw" method="POST" onsubmit="return confirm('¿Realizar el sorteo? Se asignarán grupos A/B al azar y se crearán todos los partidos de la fase de grupos.')">
+                                    <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%;">
+                                        🎲 Realizar Sorteo
+                                    </button>
+                                </form>
+                            {% else %}
+                                <p style="font-size: 0.85rem; margin: 0; color: var(--text-muted);">Cerrá las inscripciones primero.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Step 3: Playoffs -->
+                        <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); {% if progress.can_generate_playoffs %}background: #fffbeb;{% elif progress.has_playoffs %}background: #f0fdf4; opacity: 0.85;{% endif %}">
+                            <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted); margin-bottom: 0.35rem;">PASO 3 — Copas (Oro, Plata, Bronce)</div>
+                            {% if progress.has_playoffs %}
+                                <p style="font-size: 0.85rem; margin-bottom: 0.65rem; color: #065f46;">✅ Playoffs generados</p>
+                                <form action="/tournaments/detail/{{ tournament.id }}/generate-playoffs" method="POST">
+                                    <button type="submit" class="btn btn-outline btn-sm" style="width: 100%;">
+                                        ⏩ Avanzar rondas (Finales / 3° puesto)
+                                    </button>
+                                </form>
+                            {% elif progress.can_generate_playoffs %}
+                                <p style="font-size: 0.85rem; margin-bottom: 0.65rem; color: var(--text-muted);">Genera el cuadro de copas según las posiciones finales de cada grupo.</p>
+                                <form action="/tournaments/detail/{{ tournament.id }}/generate-playoffs" method="POST" onsubmit="return confirm('¿Generar las copas de Oro, Plata y Bronce según las posiciones de grupos?')">
+                                    <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%;">
+                                        🏆 Generar Copas
+                                    </button>
+                                </form>
+                            {% else %}
+                                <p style="font-size: 0.85rem; margin: 0; color: var(--text-muted);">Completá todos los partidos de la fase de grupos primero.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% elif tournament.format and tournament.format.format_type == 'elimination_with_consolation' %}
+                <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-color);">
+                    <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 0.75rem;">⚙️ Acciones del Formato</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                        <form action="/tournaments/detail/{{ tournament.id }}/generate-initial-round" method="POST">
+                            <button type="submit" class="btn btn-outline btn-sm" style="width: 100%;">⚡ Generar Primera Ronda Eliminatoria</button>
+                        </form>
+                        <form action="/tournaments/detail/{{ tournament.id }}/generate-playoffs" method="POST">
+                            <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%;">🏆 Generar Copa Plata (Consolación)</button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Admin: manual group override -->
+            {% if tournament.format and tournament.format.groups_count > 0 and progress.draw_done %}
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 0.75rem; font-size: 0.95rem;">🔧 Ajuste manual de grupos</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        {% for reg in registrations %}
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; border-bottom: 1px solid var(--border-color);">
+                                <span style="font-size: 0.85rem;">{{ reg.user.full_name }}</span>
+                                <form action="/tournaments/detail/{{ tournament.id }}/assign-group/{{ reg.id }}" method="POST" style="display: flex; gap: 0.25rem;">
+                                    <select name="group_label" onchange="this.form.submit()" class="form-control" style="font-size: 0.75rem; padding: 0.2rem 0.4rem; height: auto; width: auto;">
+                                        <option value="">--</option>
+                                        <option value="A" {% if reg.group_label == 'A' %}selected{% endif %}>A</option>
+                                        <option value="B" {% if reg.group_label == 'B' %}selected{% endif %}>B</option>
+                                    </select>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Add Match Form -->
+            <div class="card" style="border-left: 4px solid var(--primary-color);">
+                <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">🎾 Registrar Resultado</h3>
+                <form action="/tournaments/detail/{{ tournament.id }}/add-match" method="post">
+                    <div class="form-group">
+                        <label for="player1_id">Jugador 1</label>
+                        <select id="player1_id" name="player1_id" class="form-control" required>
+                            <option value="">-- Seleccionar --</option>
+                            {% for u in users %}
+                                <option value="{{ u.id }}">{{ u.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="player2_id">Jugador 2</label>
+                        <select id="player2_id" name="player2_id" class="form-control" required>
+                            <option value="">-- Seleccionar --</option>
+                            {% for u in users %}
+                                <option value="{{ u.id }}">{{ u.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group">
+                            <label for="winner_id">Ganador</label>
+                            <select id="winner_id" name="winner_id" class="form-control">
+                                <option value="">Pendiente</option>
+                                {% for u in users %}
+                                    <option value="{{ u.id }}">{{ u.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="score">Resultado</label>
+                            <input type="text" id="score" name="score" class="form-control" placeholder="Ej. 6-4, 7-5">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group">
+                            <label for="stage">Etapa</label>
+                            <select id="stage" name="stage" class="form-control" onchange="toggleManualMatchFields()">
+                                <option value="groups">Fase de Grupos</option>
+                                <option value="first_round">Primera Ronda</option>
+                                <option value="playoffs">Playoffs / Copa</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="manualGroupLabelField">
+                            <label for="group_label">Grupo</label>
+                            <select id="group_label" name="group_label" class="form-control">
+                                <option value="">Ninguno</option>
+                                <option value="A">Grupo A</option>
+                                <option value="B">Grupo B</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; display: none;" id="manualPlayoffFields">
+                        <div class="form-group">
+                            <label for="cup_name">Copa</label>
+                            <select id="cup_name" name="cup_name" class="form-control">
+                                <option value="">Ninguna</option>
+                                <option value="Oro">Oro</option>
+                                <option value="Plata">Plata</option>
+                                <option value="Bronce">Bronce</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="round_name">Ronda</label>
+                            <select id="round_name" name="round_name" class="form-control">
+                                <option value="">Ninguna</option>
+                                <option value="Semifinal">Semifinal</option>
+                                <option value="Final">Final</option>
+                                <option value="3° puesto">3° Puesto</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Registrar Partido</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Match Fixture -->
+    <div>
+        <h2 style="margin-bottom: 1.25rem;">Resultados y Fixture</h2>
+
+        {% if matches %}
+            {% set show_groups_header = true %}
+            {% for m in matches if m.stage == 'groups' %}
+                {% if show_groups_header %}
+                    <h3 style="font-size: 1.15rem; color: var(--primary-color); margin-top: 1rem; margin-bottom: 0.75rem;">Fase de Grupos</h3>
+                    {% set show_groups_header = false %}
+                {% endif %}
+                <div class="card" style="padding: 1rem; margin-bottom: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span class="badge badge-ongoing" style="font-size: 0.65rem; margin-bottom: 0.35rem;">Grupo {{ m.group_label or 'N/A' }}</span>
+                            <div style="font-weight: {% if m.winner and m.winner.id == m.player1.id %}bold{% else %}normal{% endif %};">{{ m.player1.full_name }}</div>
+                            <div style="font-weight: {% if m.winner and m.winner.id == m.player2.id %}bold{% else %}normal{% endif %};">{{ m.player2.full_name }}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="font-family: monospace; font-weight: bold; background-color: var(--primary-xlight); padding: 0.25rem 0.5rem; border-radius: 4px;">{{ m.score or 'Pendiente' }}</div>
+                            {% if current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
+                                <form action="/tournaments/detail/{{ tournament.id }}/delete-match/{{ m.id }}" method="post" onsubmit="return confirm('¿Confirmas eliminar este partido?')">
+                                    <button type="submit" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.35rem; font-size: 0.7rem;">🗑️</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% set show_first_header = true %}
+            {% for m in matches if m.stage == 'first_round' %}
+                {% if show_first_header %}
+                    <h3 style="font-size: 1.15rem; color: var(--primary-color); margin-top: 1.5rem; margin-bottom: 0.75rem;">Primera Ronda</h3>
+                    {% set show_first_header = false %}
+                {% endif %}
+                <div class="card" style="padding: 1rem; margin-bottom: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: {% if m.winner and m.winner.id == m.player1.id %}bold{% else %}normal{% endif %};">{{ m.player1.full_name }}</div>
+                            <div style="font-weight: {% if m.winner and m.winner.id == m.player2.id %}bold{% else %}normal{% endif %};">{{ m.player2.full_name }}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="font-family: monospace; font-weight: bold; background-color: var(--primary-xlight); padding: 0.25rem 0.5rem; border-radius: 4px;">{{ m.score or 'Pendiente' }}</div>
+                            {% if current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
+                                <form action="/tournaments/detail/{{ tournament.id }}/delete-match/{{ m.id }}" method="post" onsubmit="return confirm('¿Confirmas eliminar?')">
+                                    <button type="submit" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.35rem; font-size: 0.7rem;">🗑️</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% for cup_name, cup_color, cup_bg in [('Oro', '#d97706', '#fef3c7'), ('Plata', '#475569', '#f1f5f9'), ('Bronce', '#b45309', '#fef3c7')] %}
+                {% set show_cup_header = true %}
+                {% for m in matches if m.stage == 'playoffs' and m.cup_name == cup_name %}
+                    {% if show_cup_header %}
+                        <h3 style="font-size: 1.15rem; color: {{ cup_color }}; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                            {% if cup_name == 'Oro' %}🏆{% elif cup_name == 'Plata' %}🥈{% else %}🥉{% endif %}
+                            Copa de {{ cup_name }}
+                        </h3>
+                        {% set show_cup_header = false %}
+                    {% endif %}
+                    <div class="card" style="padding: 1rem; margin-bottom: 0.75rem; border-left: 3px solid {{ cup_color }};">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span class="badge badge-ongoing" style="font-size: 0.65rem; margin-bottom: 0.35rem; background-color: {{ cup_bg }}; color: {{ cup_color }};">{{ m.round_name or 'Playoff' }}</span>
+                                <div style="font-weight: {% if m.winner and m.winner.id == m.player1.id %}bold{% else %}normal{% endif %};">{{ m.player1.full_name }}</div>
+                                <div style="font-weight: {% if m.winner and m.winner.id == m.player2.id %}bold{% else %}normal{% endif %};">{{ m.player2.full_name }}</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="font-family: monospace; font-weight: bold; background-color: {{ cup_bg }}; color: {{ cup_color }}; padding: 0.25rem 0.5rem; border-radius: 4px;">{{ m.score or 'Pendiente' }}</div>
+                                {% if current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
+                                    <form action="/tournaments/detail/{{ tournament.id }}/delete-match/{{ m.id }}" method="post" onsubmit="return confirm('¿Confirmas eliminar?')">
+                                        <button type="submit" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.35rem; font-size: 0.7rem;">🗑️</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        {% else %}
+            <div class="card" style="text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
+                <p style="font-size: 2.5rem; margin-bottom: 1rem;">🎾</p>
+                <p>No hay partidos registrados en este torneo aún.</p>
+                {% if progress.is_groups_format and not progress.draw_done %}
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem;">Cerrá inscripciones y realizá el sorteo para generar el fixture.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.bracket-tree {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+.bracket-round {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 160px;
+}
+.bracket-round-label {
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: center;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.bracket-match {
+    background: var(--primary-xlight);
+    border-radius: var(--border-radius-sm);
+    padding: 0.5rem 0.65rem;
+    font-size: 0.8rem;
+}
+.bracket-player {
+    padding: 0.15rem 0;
+}
+.bracket-winner {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+.bracket-score {
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-top: 0.25rem;
+    color: var(--text-muted);
+}
+</style>
+
+<script>
+    function toggleManualMatchFields() {
+        const stage = document.getElementById('stage').value;
+        const groupField = document.getElementById('manualGroupLabelField');
+        const playoffFields = document.getElementById('manualPlayoffFields');
+        if (stage === 'groups') {
+            groupField.style.display = 'block';
+            playoffFields.style.display = 'none';
+        } else if (stage === 'playoffs') {
+            groupField.style.display = 'none';
+            playoffFields.style.display = 'grid';
+        } else {
+            groupField.style.display = 'none';
+            playoffFields.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

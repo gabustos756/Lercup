@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Torneos - Lercup Torneos{% endblock %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1>Torneos de Tenis</h1>
+        <p style="color: var(--text-muted);">Explora y gestiona los torneos de la temporada.</p>
+    </div>
+    {% if current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
+        <a href="/tournaments/create" class="btn btn-primary">➕ Crear Torneo</a>
+    {% endif %}
+</div>
+
+{% if tournaments %}
+    <div class="grid-tournaments">
+        {% for t in tournaments %}
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span class="badge badge-{{ t.surface }}">{{ t.surface }}</span>
+                        <span class="badge badge-{{ t.status }}">{{ t.status }}</span>
+                    </div>
+                    <h3 class="card-title">{{ t.name }}</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        {{ t.description or 'Sin descripción disponible.' }}
+                    </p>
+                    <div class="card-meta">
+                        <span>📅 Inicio: {{ t.start_date.strftime('%d/%m/%Y') }}</span>
+                        <span>📅 Fin: {{ t.end_date.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                </div>
+                
+                <div class="card-actions" style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <a href="/tournaments/detail/{{ t.id }}" class="btn btn-primary btn-sm">👁️ Ver Detalle</a>
+                    
+                    {% if current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
+                        <div style="display: flex; gap: 0.25rem;">
+                            <a href="/tournaments/edit/{{ t.id }}" class="btn btn-outline btn-sm" style="padding: 0.35rem 0.5rem;">✏️</a>
+                            <form action="/tournaments/delete/{{ t.id }}" method="post" style="display: inline;">
+                                <button type="submit" class="btn btn-danger btn-sm btn-delete-confirm" data-confirm-message="¿Estás seguro de que deseas eliminar el torneo {{ t.name }} y todos sus partidos?" style="padding: 0.35rem 0.5rem;">🗑️</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card" style="text-align: center; padding: 4rem 2rem; color: var(--text-muted); border-style: dashed; border-width: 2px;">
+        <p style="font-size: 2.5rem; margin-bottom: 1rem;">🏆</p>
+        <h2>No hay torneos</h2>
+        <p>Aún no se han registrado torneos de tenis.</p>
+        {% if current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
+            <a href="/tournaments/create" class="btn btn-secondary btn-sm" style="margin-top: 1.5rem;">Crear Torneo</a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

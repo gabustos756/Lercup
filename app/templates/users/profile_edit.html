@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Editar Mi Perfil - Lercup Torneos{% block title_end %}{% endblock %}{% endblock %}
+{% block content %}
+<div class="auth-wrapper" style="max-width: 600px; margin: 0 auto;">
+    <div class="card">
+        <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem; text-align: center;">
+            Editar Mi Perfil
+        </h1>
+        <p style="color: var(--text-muted); text-align: center; margin-bottom: 2rem;">
+            Actualiza tus datos personales y tu perfil de jugador.
+        </p>
+
+        <form action="/users/profile/edit" method="post">
+            <div class="form-group">
+                <label for="full_name">Nombre Completo</label>
+                <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Ej. Roger Federer" required value="{{ user.full_name }}">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Correo Electrónico</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="tu@correo.com" required value="{{ user.email }}">
+            </div>
+
+            <div class="grid-cols-2" style="gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="city">Ciudad</label>
+                    <input type="text" id="city" name="city" class="form-control" placeholder="Ej. Buenos Aires" value="{{ user.city or '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone_number">Teléfono (Opcional)</label>
+                    <input type="tel" id="phone_number" name="phone_number" class="form-control" placeholder="Ej. +54 11 1234-5678" value="{{ user.phone_number or '' }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="avatar_url">URL de Imagen de Avatar (Opcional)</label>
+                <input type="url" id="avatar_url" name="avatar_url" class="form-control" placeholder="https://..." value="{{ user.avatar_url or '' }}">
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1.5rem; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">🎾 Perfil de Jugador (Tenis)</h3>
+                
+                <div class="form-group">
+                    <label for="nickname">Apodo (Opcional)</label>
+                    <input type="text" id="nickname" name="nickname" class="form-control" placeholder="Ej. La Bala, El Mago, Roger" value="{{ nickname or '' }}">
+                </div>
+
+                <div class="grid-cols-2" style="gap: 1rem; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label for="category">Categoría</label>
+                        <select id="category" name="category" class="form-control">
+                            <option value="Primera" {% if category == 'Primera' %}selected{% endif %}>Primera</option>
+                            <option value="A" {% if category == 'A' %}selected{% endif %}>A</option>
+                            <option value="B1" {% if category == 'B1' %}selected{% endif %}>B1</option>
+                            <option value="B2" {% if not category or category == 'B2' %}selected{% endif %}>B2</option>
+                            <option value="C" {% if category == 'C' %}selected{% endif %}>C</option>
+                            <option value="D" {% if category == 'D' %}selected{% endif %}>D</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hand_preference">Mano Hábil</label>
+                        <select id="hand_preference" name="hand_preference" class="form-control">
+                            <option value="right" {% if not hand_preference or hand_preference == 'right' %}selected{% endif %}>Diestro</option>
+                            <option value="left" {% if hand_preference == 'left' %}selected{% endif %}>Zurdo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1.5rem;">
+                <label for="password">Contraseña (dejar en blanco para no modificar)</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••">
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <a href="/users/profile/{{ user.id }}" class="btn btn-outline" style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center;">Cancelar</a>
+                <button type="submit" class="btn btn-primary" style="flex: 2;">Actualizar Perfil</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
