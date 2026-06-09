@@ -1,3 +1,4 @@
+from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
@@ -10,9 +11,10 @@ from app.routes.web import home, auth, users, tournaments, formats
 from app.routes.api import router as api_router
 from contextlib import asynccontextmanager
 
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Auto-initialize the database schema if running SQLite
     init_db()
     yield
 
@@ -22,6 +24,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 # Exception handler for unauthenticated access
 @app.exception_handler(NotAuthenticatedException)
@@ -35,11 +41,14 @@ async def not_admin_handler(request: Request, exc: NotAdminException):
     flash(request, "Acceso denegado. Se requieren permisos de administrador.", "danger")
     return RedirectResponse(url="/", status_code=303)
 
-# Enable Session Middleware (essential for auth sessions and flash messages)
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    https_only=(settings.ENV == "production"),
+    same_site="lax",
+)
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Register Web Routes
 app.include_router(home.router)
@@ -50,4 +59,3 @@ app.include_router(formats.router)
 
 # Register API Routes
 app.include_router(api_router)
-

@@ -13,10 +13,11 @@ def get_session():
         yield session
 
 def init_db():
-    # Helper to create tables immediately (good for simple sqlite setup)
-    SQLModel.metadata.create_all(engine)
-    
-    # Seed default formats
+    import app.models  # noqa: F401 — register all models on metadata
+
+    if settings.ENV == "development":
+        SQLModel.metadata.create_all(engine)
+
     from app.services.format_service import FormatService
     with Session(engine) as session:
         FormatService.prepopulate_default_formats(session)

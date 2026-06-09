@@ -1,10 +1,12 @@
+from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 from sqlmodel import Session
 from app.models.user import User
 from typing import Optional
 
-templates = Jinja2Templates(directory="app/templates")
+TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 def flash(request: Request, message: str, category: str = "info"):
     """
