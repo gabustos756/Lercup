@@ -25,8 +25,9 @@ def upgrade() -> None:
         batch_op.add_column(sa.Column('role', sqlmodel.sql.sqltypes.AutoString(), nullable=True, server_default='player'))
 
     # Update existing rows based on is_admin status
-    op.execute("UPDATE user SET role = 'admin' WHERE is_admin = 1")
-    op.execute("UPDATE user SET role = 'player' WHERE is_admin = 0 OR is_admin IS NULL")
+    # "user" must be quoted — reserved keyword in PostgreSQL
+    op.execute('UPDATE "user" SET role = \'admin\' WHERE is_admin IS TRUE')
+    op.execute('UPDATE "user" SET role = \'player\' WHERE is_admin IS NOT TRUE')
 
 
 
