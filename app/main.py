@@ -1,10 +1,11 @@
+import logging
 from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
-from app.core.config import settings
-from app.core.database import init_db
+from app.core.config import settings, database_url_for_log
+from app.core.database import engine, init_db
 from app.core.templates import flash
 from app.core.security import NotAuthenticatedException, NotAdminException
 from app.routes.web import home, auth, users, tournaments, formats
@@ -13,8 +14,16 @@ from contextlib import asynccontextmanager
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
+logger = logging.getLogger(__name__)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info(
+        "Startup: env=%s db_dialect=%s db_url=%s",
+        settings.ENV,
+        engine.dialect.name,
+        database_url_for_log(settings.DATABASE_URL),
+    )
     init_db()
     yield
 

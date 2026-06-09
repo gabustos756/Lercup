@@ -1,12 +1,25 @@
+import logging
 from sqlmodel import create_engine, Session, SQLModel
-from app.core.config import settings
+from app.core.config import settings, database_url_for_log
 
-# If using SQLite, we need connect_args to allow multithreading
+logger = logging.getLogger(__name__)
+
 connect_args = {}
 if settings.DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
 
-engine = create_engine(settings.DATABASE_URL, echo=True if settings.ENV == "development" else False, connect_args=connect_args)
+engine = create_engine(
+    settings.DATABASE_URL,
+    echo=settings.ENV == "development",
+    connect_args=connect_args,
+)
+
+logger.info(
+    "Database engine: dialect=%s url=%s env=%s",
+    engine.dialect.name,
+    database_url_for_log(settings.DATABASE_URL),
+    settings.ENV,
+)
 
 def get_session():
     with Session(engine) as session:
