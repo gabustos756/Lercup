@@ -18,11 +18,14 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    css_path = STATIC_DIR / "css" / "app.css"
+    css_info = f"{css_path.stat().st_size} bytes" if css_path.exists() else "MISSING"
     logger.info(
-        "Startup: env=%s db_dialect=%s db_url=%s",
+        "Startup: env=%s db_dialect=%s db_url=%s static_css=%s",
         settings.ENV,
         engine.dialect.name,
         database_url_for_log(settings.DATABASE_URL),
+        css_info,
     )
     init_db()
     yield
@@ -57,8 +60,6 @@ app.add_middleware(
     same_site="lax",
 )
 
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
 # Register Web Routes
 app.include_router(home.router)
 app.include_router(auth.router)
@@ -70,3 +71,11 @@ app.include_router(notifications.router)
 
 # Register API Routes
 app.include_router(api_router)
+
+# Static files last (FastAPI/Starlette routing order)
+css_path = STATIC_DIR / "css" / "app.css"
+if css_path.exists():
+    logger.info("Static assets: dir=%s css_bytes=%s", STATIC_DIR, css_path.stat().st_size)
+else:
+    logger.warning("Static assets missing: %s", css_path)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

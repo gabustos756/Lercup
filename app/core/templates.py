@@ -8,7 +8,18 @@ from app.core.time_utils import time_ago, format_match_datetime
 from typing import Optional
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+STATIC_DIR = TEMPLATES_DIR.parent / "static"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+
+def static_asset_version() -> str:
+    """Cache-busting token from newest static asset mtime."""
+    latest = 0.0
+    for pattern in ("css/app.css", "js/app.js"):
+        path = STATIC_DIR / pattern
+        if path.exists():
+            latest = max(latest, path.stat().st_mtime)
+    return str(int(latest)) if latest else "1"
 templates.env.filters["time_ago"] = time_ago
 templates.env.filters["format_match_datetime"] = format_match_datetime
 
@@ -58,5 +69,6 @@ def render_template(request: Request, db: Session, template_name: str, context: 
     # Retrieve and clear flash messages from session
     messages = request.session.pop("flash_messages", [])
     context["messages"] = messages
-    
+    context["static_version"] = static_asset_version()
+
     return templates.TemplateResponse(request, template_name, context)
