@@ -3,6 +3,16 @@ from urllib.parse import urlparse
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
+def _is_railway_runtime() -> bool:
+    """True when the process runs inside Railway (deploy / shell), not on a local Mac."""
+    return bool(
+        os.environ.get("RAILWAY_ENVIRONMENT")
+        or os.environ.get("RAILWAY_PROJECT_ID")
+        or os.environ.get("RAILWAY_SERVICE_ID")
+    )
+
+
 class Settings(BaseSettings):
     ENV: str = "development"
     SECRET_KEY: str = "devsecretkeychangeitpostmvp"
@@ -23,7 +33,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def enforce_production_database(self) -> "Settings":
-        if "railway.internal" in self.DATABASE_URL:
+        if "railway.internal" in self.DATABASE_URL and not _is_railway_runtime():
             raise ValueError(
                 "DATABASE_URL apunta a postgres.railway.internal, que solo funciona "
                 "dentro de la red de Railway (deploy), no en tu Mac.\n"
