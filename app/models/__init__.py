@@ -5,3 +5,4 @@ from app.models.registration import TournamentRegistration
 from app.models.match import Match
 from app.models.tournament_format import TournamentFormat
 from app.models.group_round import GroupRound
+from app.models.notification import Notification

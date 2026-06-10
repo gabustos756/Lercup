@@ -1,0 +1,202 @@
+{# Requires: m, tournament, current_user, jornada_key (optional), show_admin_delete (optional) #}
+{% set return_url = '/tournaments/detail/' ~ tournament.id %}
+{% set match_status = m.match_status or 'pending' %}
+{% set is_player1 = current_user and current_user.id == m.player1_id %}
+{% set is_player2 = current_user and current_user.id == m.player2_id %}
+{% set is_match_player = is_player1 or is_player2 %}
+{% set is_admin = current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
+{% set i_proposed = current_user and is_match_player and m.proposed_by_id == current_user.id %}
+{% set opponent = m.player2 if is_player1 else m.player1 %}
+{% set opponent_phone = m.player2_phone if is_player1 else m.player1_phone %}
+{% set my_name = m.player1.full_name if is_player1 else (m.player2.full_name if is_player2 else (current_user.full_name if current_user else '')) %}
+{% set display_datetime = m.proposed_datetime if match_status == 'proposed' else (m.match_date if match_status in ['confirmed', 'played'] else None) %}
+{% set show_player_panel = current_user and is_match_player and match_status != 'played' %}
+{% set show_admin_panel = current_user and is_admin %}
+{% set show_panel = show_player_panel or show_admin_panel %}
+<article class="tournament-match-card tournament-match-card--{{ match_status }}"
+         data-opponent-name="{{ opponent.full_name if opponent else '' }}"
+         data-my-name="{{ my_name }}"
+         data-tournament-name="{{ tournament.name }}"
+         data-opponent-phone="{{ opponent_phone or '' }}">
+
+    <div class="tournament-match-card-body">
+        <div class="tournament-match-card-header">
+            <div class="tournament-match-card-meta">
+                {% if m.group_label %}<span>Grupo {{ m.group_label }}</span>{% endif %}
+                {% if m.jornada_number %}<span>Jornada {{ m.jornada_number }}</span>{% endif %}
+                {% if m.round_name and not m.jornada_number %}<span>{{ m.round_name }}</span>{% endif %}
+                {% if m.cup_name %}<span>Copa {{ m.cup_name }}</span>{% endif %}
+            </div>
+            {% if match_status == 'pending' %}
+                <span class="match-status-badge match-status-badge--pending">Pendiente</span>
+            {% elif match_status == 'proposed' %}
+                <span class="match-status-badge match-status-badge--proposed">
+                    {% if i_proposed %}Propuesta enviada{% else %}Propuesta recibida{% endif %}
+                </span>
+            {% elif match_status == 'confirmed' %}
+                <span class="match-status-badge match-status-badge--confirmed">Confirmado</span>
+            {% elif match_status == 'rejected' %}
+                <span class="match-status-badge match-status-badge--rejected">Rechazado</span>
+            {% elif match_status == 'played' %}
+                <span class="match-status-badge match-status-badge--played">Jugado</span>
+            {% endif %}
+        </div>
+
+        <div class="tournament-match-players">
+            <div class="tournament-match-player {% if m.winner and m.player1 and m.winner.id == m.player1.id %}tournament-match-player--winner{% endif %}">
+                <a href="/users/profile/{{ m.player1.id }}" class="tournament-match-player-link">{{ m.player1.full_name }}</a>
+            </div>
+            <span class="tournament-match-vs">vs</span>
+            <div class="tournament-match-player {% if m.winner and m.player2 and m.winner.id == m.player2.id %}tournament-match-player--winner{% endif %}">
+                <a href="/users/profile/{{ m.player2.id }}" class="tournament-match-player-link">{{ m.player2.full_name }}</a>
+            </div>
+        </div>
+
+        {% if match_status == 'played' and m.score %}
+            <div class="tournament-match-result">
+                <span class="tournament-match-score">{{ m.score }}</span>
+                {% if m.winner %}
+                    <span class="tournament-match-winner-label">🏆 {{ m.winner.full_name }}</span>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if match_status != 'pending' and match_status != 'played' %}
+            {% if display_datetime or m.location_label or m.location_url or m.proposed_by %}
+                <div class="tournament-match-schedule">
+                    {% if display_datetime %}
+                        <p class="tournament-match-schedule-datetime">📅 {{ display_datetime | format_match_datetime }}</p>
+                    {% endif %}
+                    {% if m.location_label %}
+                        <p class="tournament-match-schedule-location">📍 {{ m.location_label }}</p>
+                    {% endif %}
+                    {% if m.location_url %}
+                        <a href="{{ m.location_url }}" target="_blank" rel="noopener noreferrer" class="schedule-map-link">Ver en Maps ↗</a>
+                    {% endif %}
+                    {% if m.proposed_by and match_status == 'proposed' %}
+                        <p class="tournament-match-proposed-by">Propuesto por {{ m.proposed_by.full_name }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endif %}
+
+        {% if show_panel %}
+            <button type="button"
+                    class="match-panel-toggle btn btn-outline btn-sm"
+                    aria-expanded="false"
+                    {% if jornada_key %}data-jornada-key="{{ jornada_key }}"{% endif %}
+                    data-panel-target="match-panel-{{ m.id }}">
+                {% if show_player_panel and match_status in ['pending', 'rejected'] %}
+                    📅 Proponer fecha
+                {% elif show_player_panel and match_status == 'proposed' and not i_proposed %}
+                    📅 Responder propuesta
+                {% elif show_admin_panel and not show_player_panel %}
+                    ⚙️ Editar fecha (admin)
+                {% else %}
+                    ✏️ Editar fecha
+                {% endif %}
+            </button>
+        {% endif %}
+
+        {% if show_admin_delete and is_admin %}
+            <form action="/tournaments/detail/{{ tournament.id }}/delete-match/{{ m.id }}" method="post"
+                  class="tournament-match-delete-form"
+                  onsubmit="return confirm('¿Confirmas eliminar este partido?')">
+                <button type="submit" class="btn btn-danger btn-sm" title="Eliminar partido">🗑️</button>
+            </form>
+        {% endif %}
+    </div>
+
+    {% if show_panel %}
+        <div class="match-panel-body" id="match-panel-{{ m.id }}"
+             {% if jornada_key %}data-jornada-key="{{ jornada_key }}"{% endif %}>
+            <div class="match-panel-inner">
+                {% if show_player_panel %}
+                    {% if match_status in ['pending', 'rejected'] %}
+                        <form class="match-proposal-form" method="post" action="/matches/{{ m.id }}/propose">
+                            <input type="hidden" name="return_url" value="{{ return_url }}">
+                            <div class="form-group">
+                                <label for="proposed_datetime_{{ m.id }}">Fecha y hora propuesta</label>
+                                <input type="datetime-local" id="proposed_datetime_{{ m.id }}" name="proposed_datetime"
+                                       class="form-control proposal-datetime-input" required
+                                       min="{{ tournament.start_date.strftime('%Y-%m-%dT%H:%M') }}"
+                                       max="{{ tournament.end_date.strftime('%Y-%m-%dT%H:%M') }}">
+                                <p class="proposal-label-hint">Rango del torneo: {{ tournament.start_date.strftime('%d/%m/%Y') }} – {{ tournament.end_date.strftime('%d/%m/%Y') }}</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="location_label_{{ m.id }}">Lugar <span class="form-label-optional">(opcional)</span></label>
+                                <input type="text" id="location_label_{{ m.id }}" name="location_label"
+                                       class="form-control proposal-location-input" placeholder="Ej: Cancha 3, Club Laler">
+                            </div>
+                            <div class="form-group">
+                                <label for="location_url_{{ m.id }}">URL Google Maps <span class="form-label-optional">(opcional)</span></label>
+                                <input type="url" id="location_url_{{ m.id }}" name="location_url" class="form-control" placeholder="https://maps.google.com/...">
+                            </div>
+                            <div class="match-action-row">
+                                <button type="submit" class="btn btn-primary btn-sm">Confirmar propuesta</button>
+                                <button type="button" class="btn btn-whatsapp btn-sm whatsapp-notify-btn"
+                                    {% if not opponent_phone %}disabled title="El oponente no tiene número registrado"{% endif %}>
+                                    Notificar por WhatsApp
+                                </button>
+                            </div>
+                        </form>
+
+                    {% elif match_status == 'proposed' and i_proposed %}
+                        <div class="status-message status-message--waiting">
+                            <span class="status-message-icon" aria-hidden="true">🕐</span>
+                            <span>Esperando confirmación del oponente</span>
+                        </div>
+                        <div class="match-action-row" style="margin-top: 0.75rem;">
+                            <button type="button" class="btn btn-whatsapp btn-sm whatsapp-notify-btn"
+                                data-fixed-datetime="{{ m.proposed_datetime.strftime('%Y-%m-%dT%H:%M') if m.proposed_datetime else '' }}"
+                                data-fixed-location="{{ m.location_label or '' }}"
+                                {% if not opponent_phone %}disabled title="El oponente no tiene número registrado"{% endif %}>
+                                Notificar por WhatsApp
+                            </button>
+                        </div>
+
+                    {% elif match_status == 'proposed' and not i_proposed %}
+                        <div class="match-action-row">
+                            <form method="post" action="/matches/{{ m.id }}/confirm">
+                                <input type="hidden" name="return_url" value="{{ return_url }}">
+                                <button type="submit" class="btn btn-accept btn-sm">✓ Aceptar fecha</button>
+                            </form>
+                            <form method="post" action="/matches/{{ m.id }}/reject">
+                                <input type="hidden" name="return_url" value="{{ return_url }}">
+                                <button type="submit" class="btn btn-reject btn-sm">✕ Rechazar</button>
+                            </form>
+                        </div>
+
+                    {% elif match_status == 'confirmed' %}
+                        <div class="status-message status-message--confirmed">
+                            <span class="status-message-icon" aria-hidden="true">✓</span>
+                            <span>Fecha confirmada</span>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                {% if show_admin_panel %}
+                    <div class="match-admin-panel" {% if show_player_panel %}style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);"{% endif %}>
+                        <p class="match-admin-panel-label">⚙️ Admin — establecer fecha</p>
+                        <form method="post" action="/matches/{{ m.id }}/admin-set">
+                            <input type="hidden" name="return_url" value="{{ return_url }}">
+                            <div class="form-group">
+                                <label for="admin_datetime_{{ m.id }}">Fecha y hora</label>
+                                <input type="datetime-local" id="admin_datetime_{{ m.id }}" name="proposed_datetime" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="admin_location_{{ m.id }}">Lugar <span class="form-label-optional">(opcional)</span></label>
+                                <input type="text" id="admin_location_{{ m.id }}" name="location_label" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="admin_maps_{{ m.id }}">URL Google Maps <span class="form-label-optional">(opcional)</span></label>
+                                <input type="url" id="admin_maps_{{ m.id }}" name="location_url" class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-secondary btn-sm">Confirmar como admin</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</article>

@@ -23,6 +23,17 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def enforce_production_database(self) -> "Settings":
+        if "railway.internal" in self.DATABASE_URL:
+            raise ValueError(
+                "DATABASE_URL apunta a postgres.railway.internal, que solo funciona "
+                "dentro de la red de Railway (deploy), no en tu Mac.\n"
+                "Para desarrollo local, en .env usá:\n"
+                "  ENV=development\n"
+                "  DATABASE_URL=sqlite:///database.db\n"
+                "Si querés conectar a Postgres de Railway desde tu máquina, copiá la "
+                "URL PÚBLICA (Public Network) del servicio Postgres en el dashboard."
+            )
+
         if self.ENV != "production":
             return self
 

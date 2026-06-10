@@ -111,7 +111,9 @@ def user_profile(
         return RedirectResponse(url="/users", status_code=303)
     
     stats = UserService.get_user_stats(db, user_id)
-    matches = UserService.get_user_matches(db, user_id)
+    upcoming_matches = UserService.get_user_upcoming_matches(db, user_id)
+    played_matches = UserService.get_user_played_matches(db, user_id)
+    is_own_profile = current_user.id == user_id
     
     # Set active_page navigation highlighting
     active_page = "profile" if current_user.id == user_id else "users"
@@ -127,7 +129,9 @@ def user_profile(
         "user": user,
         "profile": tennis_profile,
         "stats": stats,
-        "matches": matches,
+        "upcoming_matches": upcoming_matches,
+        "played_matches": played_matches,
+        "is_own_profile": is_own_profile,
         "active_page": active_page
     })
 

@@ -154,9 +154,16 @@ class FixtureService:
                         tournament_id=tournament_id,
                         player1_id=p1.id,
                         player2_id=p2.id,
+                        winner_id=None,
+                        score=None,
                         stage="groups",
                         group_label=group_label,
                         jornada_number=jornada_number,
+                        match_status="pending",
+                        proposed_datetime=None,
+                        proposed_by_id=None,
+                        location_label=None,
+                        location_url=None,
                     ))
                     stats["matches"] += 1
 
@@ -223,12 +230,28 @@ class FixtureService:
                 p1 = db.get(User, m.player1_id)
                 p2 = db.get(User, m.player2_id)
                 winner = db.get(User, m.winner_id) if m.winner_id else None
+                proposed_by = (
+                    db.get(User, m.proposed_by_id) if m.proposed_by_id else None
+                )
                 jornada_matches.append({
                     "id": m.id,
+                    "player1_id": m.player1_id,
+                    "player2_id": m.player2_id,
                     "player1": p1,
                     "player2": p2,
                     "winner": winner,
                     "score": m.score,
+                    "match_status": m.match_status,
+                    "match_date": m.match_date,
+                    "proposed_datetime": m.proposed_datetime,
+                    "proposed_by": proposed_by,
+                    "proposed_by_id": m.proposed_by_id,
+                    "location_label": m.location_label,
+                    "location_url": m.location_url,
+                    "group_label": m.group_label,
+                    "jornada_number": m.jornada_number,
+                    "player1_phone": p1.phone_number if p1 else None,
+                    "player2_phone": p2.phone_number if p2 else None,
                 })
 
             result.setdefault(rnd.group_label, []).append({

@@ -29,10 +29,45 @@
                     <li><a href="/users" class="nav-link {% if active_page == 'users' %}active{% endif %}">Usuarios</a></li>
                     
                     {% if current_user %}
-                        <li class="user-menu">
-                            <span class="user-badge">👤 {{ current_user.full_name }}</span>
-                            <a href="/users/profile/{{ current_user.id }}" class="nav-link {% if active_page == 'profile' %}active{% endif %}">Mi Perfil</a>
-                            <a href="/auth/logout" class="nav-link nav-btn">Salir</a>
+                        <li class="nav-actions-group">
+                            <div class="notification-menu">
+                                <button type="button" class="notification-bell" aria-label="Notificaciones{% if unread_notification_count > 0 %} ({{ unread_notification_count }} sin leer){% endif %}" aria-expanded="false">
+                                    <span class="notification-bell-icon" aria-hidden="true">🔔</span>
+                                    {% if unread_notification_count > 0 %}
+                                        <span class="notification-badge" aria-hidden="true">{{ unread_notification_count }}</span>
+                                    {% endif %}
+                                </button>
+                                <div class="notification-dropdown" hidden>
+                                    <div class="notification-dropdown-header">
+                                        <span>Notificaciones</span>
+                                        {% if unread_notification_count > 0 %}
+                                            <span class="notification-dropdown-count">{{ unread_notification_count }} nueva(s)</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if recent_unread_notifications %}
+                                        <ul class="notification-dropdown-list">
+                                            {% for n in recent_unread_notifications %}
+                                                <li>
+                                                    <form method="post" action="/notifications/{{ n.id }}/read">
+                                                        <button type="submit" class="notification-dropdown-item">
+                                                            <span class="notification-dropdown-message">{{ n.message }}</span>
+                                                            <span class="notification-dropdown-time">{{ n.created_at | time_ago }}</span>
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p class="notification-dropdown-empty">No tenés notificaciones nuevas</p>
+                                    {% endif %}
+                                    <a href="/notifications" class="notification-dropdown-footer {% if active_page == 'notifications' %}active{% endif %}">Ver todas</a>
+                                </div>
+                            </div>
+                            <div class="user-menu">
+                                <span class="user-badge">👤 {{ current_user.full_name }}</span>
+                                <a href="/users/profile/{{ current_user.id }}" class="nav-link {% if active_page == 'profile' %}active{% endif %}">Mi Perfil</a>
+                                <a href="/auth/logout" class="nav-link nav-btn">Salir</a>
+                            </div>
                         </li>
                     {% else %}
                         <li><a href="/auth/login" class="nav-link">Iniciar Sesión</a></li>

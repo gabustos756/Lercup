@@ -1,69 +1,61 @@
 {% extends "base.html" %}
 {% block title %}Perfil de {{ user.full_name }} - Lercup Torneos{% endblock %}
 {% block content %}
-<div class="grid-cols-1-2" style="margin-top: 1rem; gap: 2rem;">
+<div class="grid-cols-1-2 profile-layout">
     <!-- Profile Card & Stats -->
     <div>
-        <div class="card" style="text-align: center; padding: 2.5rem 1.5rem; margin-bottom: 1.5rem; position: relative; overflow: hidden;">
-            <!-- Subtle tennis court lines decor background -->
-            <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background-color: var(--primary-color);"></div>
+        <div class="card profile-card">
+            <div class="profile-card-accent"></div>
             
-            <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+            <div class="profile-avatar-wrap">
                 {% if user.avatar_url %}
-                    <img src="{{ user.avatar_url }}" alt="Avatar" style="width: 6rem; height: 6rem; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-light); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <img src="{{ user.avatar_url }}" alt="Avatar" class="profile-avatar-img">
                 {% else %}
-                    <div style="width: 6rem; height: 6rem; border-radius: 50%; background-color: var(--primary-light); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 2.2rem; text-transform: uppercase; border: 3px solid var(--primary-light); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                        {{ user.full_name[:2] }}
-                    </div>
+                    <div class="profile-avatar-fallback">{{ user.full_name[:2] }}</div>
                 {% endif %}
             </div>
             
-            <h2 style="margin-bottom: 0.25rem; font-size: 1.6rem;">{{ user.full_name }}</h2>
+            <h2 class="profile-name">{{ user.full_name }}</h2>
             {% if profile and profile.nickname %}
-                <p style="color: var(--accent-color); font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem; font-style: italic;">"{{ profile.nickname }}"</p>
+                <p class="profile-nickname">"{{ profile.nickname }}"</p>
             {% endif %}
-            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 0.5rem;">{{ user.email }}</p>
+            <p class="profile-email">{{ user.email }}</p>
             
             {% if user.city or user.phone_number %}
-                <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; display: flex; flex-direction: column; align-items: center; gap: 0.35rem;">
+                <div class="profile-contact">
                     {% if user.city %}
-                        <p style="display: flex; align-items: center; gap: 0.25rem; margin: 0;">📍 {{ user.city }}</p>
+                        <p>📍 {{ user.city }}</p>
                     {% endif %}
                     {% if user.phone_number %}
-                        <p style="display: flex; align-items: center; gap: 0.25rem; margin: 0;">📱 {{ user.phone_number }}</p>
+                        <p>📱 {{ user.phone_number }}</p>
                     {% endif %}
                 </div>
             {% endif %}
 
-            <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+            <div class="profile-role-wrap">
                 {% if user.role == 'admin' or user.is_admin %}
-                    <span class="badge" style="background-color: var(--accent-color); color: white; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: bold;">Administrador</span>
+                    <span class="badge profile-role-badge profile-role-admin">Administrador</span>
                 {% elif user.role == 'tournament_admin' %}
-                    <span class="badge" style="background-color: var(--primary-color); color: white; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: bold;">Organizador</span>
+                    <span class="badge profile-role-badge profile-role-organizer">Organizador</span>
                 {% else %}
-                    <span class="badge" style="background-color: var(--primary-light); color: white; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: bold;">Jugador</span>
+                    <span class="badge profile-role-badge profile-role-player">Jugador</span>
                 {% endif %}
 
-                {% if current_user and current_user.id == user.id %}
-                    <a href="/users/profile/edit" class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none; margin-top: 0.25rem;">
-                        ✏️ Editar Perfil
-                    </a>
+                {% if is_own_profile %}
+                    <a href="/users/profile/edit" class="btn btn-outline btn-sm profile-edit-link">✏️ Editar Perfil</a>
                 {% endif %}
             </div>
 
-            <!-- Player Profile Stats (Tennis level and hand preference) -->
             {% if profile %}
-                <div style="display: flex; justify-content: center; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem; margin-top: 1.25rem; font-size: 0.9rem;">
-                    <div style="flex: 1; text-align: center;">
-                        <span style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin-bottom: 0.25rem;">Categoría</span>
-                        <span style="font-weight: 700; color: var(--primary-color);">
-                            {{ profile.category or 'B2' }}
-                        </span>
+                <div class="profile-stats-inline">
+                    <div>
+                        <span class="profile-stats-label">Categoría</span>
+                        <span class="profile-stats-value">{{ profile.category or 'B2' }}</span>
                     </div>
-                    <div style="width: 1px; background-color: var(--border-color);"></div>
-                    <div style="flex: 1; text-align: center;">
-                        <span style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin-bottom: 0.25rem;">Mano Hábil</span>
-                        <span style="font-weight: 700; color: var(--primary-color);">
+                    <div class="profile-stats-divider"></div>
+                    <div>
+                        <span class="profile-stats-label">Mano Hábil</span>
+                        <span class="profile-stats-value">
                             {% if profile.hand_preference == 'right' %}Diestro
                             {% elif profile.hand_preference == 'left' %}Zurdo
                             {% else %}{{ profile.hand_preference }}{% endif %}
@@ -72,81 +64,268 @@
                 </div>
             {% endif %}
 
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">Miembro desde: {{ user.created_at.strftime('%d/%m/%Y') }}</p>
+            <p class="profile-since">Miembro desde: {{ user.created_at.strftime('%d/%m/%Y') }}</p>
         </div>
 
-        <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 0.75rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">Estadísticas de Juego</h3>
+        <h3 class="section-eyebrow">Estadísticas de Juego</h3>
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-val">{{ stats.played }}</div>
                 <div class="stat-label">Jugados</div>
             </div>
-            <div class="stat-card" style="border-top: 3px solid var(--success-color);">
-                <div class="stat-val" style="color: var(--success-color);">{{ stats.won }}</div>
+            <div class="stat-card stat-card--won">
+                <div class="stat-val">{{ stats.won }}</div>
                 <div class="stat-label">Victorias</div>
             </div>
-            <div class="stat-card" style="border-top: 3px solid var(--danger-color);">
-                <div class="stat-val" style="color: var(--danger-color);">{{ stats.lost }}</div>
+            <div class="stat-card stat-card--lost">
+                <div class="stat-val">{{ stats.lost }}</div>
                 <div class="stat-label">Derrotas</div>
             </div>
-            <div class="stat-card" style="border-top: 3px solid var(--primary-color);">
+            <div class="stat-card stat-card--rate">
                 <div class="stat-val">{{ stats.win_rate }}%</div>
                 <div class="stat-label">Win Rate</div>
             </div>
         </div>
     </div>
 
-    <!-- Match History -->
+    <!-- Matches Column -->
     <div>
-        <h2 style="margin-bottom: 1.25rem;">Historial de Partidos</h2>
+        <h2 class="section-title">Próximos Partidos</h2>
+        {% if upcoming_matches %}
+            <div class="upcoming-matches-list">
+                {% for m in upcoming_matches %}
+                    {% set match = m.match %}
+                    <article class="upcoming-match-card upcoming-match-card--{{ match.match_status }}"
+                             data-opponent-name="{{ m.opponent_name }}"
+                             data-my-name="{{ user.full_name }}"
+                             data-tournament-name="{{ m.tournament_name }}"
+                             data-opponent-phone="{{ m.opponent_phone or '' }}">
+
+                        <div class="match-card-header">
+                            <div class="match-card-header-left">
+                                <p class="match-card-tournament">{{ m.tournament_name }}</p>
+                                {% if match.group_label or match.jornada_number %}
+                                    <p class="match-card-submeta">
+                                        {% if match.group_label %}<span>Grupo {{ match.group_label }}</span>{% endif %}
+                                        {% if match.jornada_number %}<span>Jornada {{ match.jornada_number }}</span>{% endif %}
+                                    </p>
+                                {% endif %}
+                            </div>
+                            {% if match.match_status == 'pending' %}
+                                <span class="match-status-badge match-status-badge--pending">Pendiente</span>
+                            {% elif match.match_status == 'proposed' %}
+                                <span class="match-status-badge match-status-badge--proposed">
+                                    {% if m.i_proposed %}Propuesta enviada{% else %}Propuesta recibida{% endif %}
+                                </span>
+                            {% elif match.match_status == 'confirmed' %}
+                                <span class="match-status-badge match-status-badge--confirmed">Confirmado</span>
+                            {% elif match.match_status == 'rejected' %}
+                                <span class="match-status-badge match-status-badge--rejected">Rechazado</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="match-card-opponent">
+                            <span class="player-name">{{ user.full_name }}</span>
+                            <span class="vs-label">vs</span>
+                            <a href="/users/profile/{{ m.opponent_id }}" class="opponent-link">{{ m.opponent_name }}</a>
+                        </div>
+
+                        {% if is_own_profile %}
+                            {% if match.match_status in ['pending', 'rejected'] %}
+                                {% if match.match_status == 'rejected' %}
+                                    <div class="status-message status-message--rejected">
+                                        <span class="status-message-icon" aria-hidden="true">✕</span>
+                                        <span>Fecha rechazada — podés proponer una nueva</span>
+                                    </div>
+                                {% endif %}
+
+                                <form class="match-proposal-form" method="post" action="/matches/{{ match.id }}/propose">
+                                    <div class="form-group">
+                                        <label for="proposed_datetime_{{ match.id }}">Fecha y hora propuesta</label>
+                                        <input
+                                            type="datetime-local"
+                                            id="proposed_datetime_{{ match.id }}"
+                                            name="proposed_datetime"
+                                            class="form-control proposal-datetime-input"
+                                            required
+                                            {% if m.tournament_start %}min="{{ m.tournament_start.strftime('%Y-%m-%dT%H:%M') }}"{% endif %}
+                                            {% if m.tournament_end %}max="{{ m.tournament_end.strftime('%Y-%m-%dT%H:%M') }}"{% endif %}
+                                        >
+                                        {% if m.tournament_start and m.tournament_end %}
+                                            <p class="proposal-label-hint">Dentro del rango del torneo: {{ m.tournament_start.strftime('%d/%m/%Y') }} – {{ m.tournament_end.strftime('%d/%m/%Y') }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="location_label_{{ match.id }}">
+                                            Lugar <span class="form-label-optional">(opcional)</span>
+                                        </label>
+                                        <input type="text" id="location_label_{{ match.id }}" name="location_label" class="form-control proposal-location-input" placeholder="Ej: Cancha 3, Club Laler">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="location_url_{{ match.id }}">
+                                            URL Google Maps <span class="form-label-optional">(opcional)</span>
+                                        </label>
+                                        <input type="url" id="location_url_{{ match.id }}" name="location_url" class="form-control" placeholder="https://maps.google.com/...">
+                                    </div>
+                                    <div class="match-action-row">
+                                        <button type="submit" class="btn btn-primary btn-sm">Confirmar propuesta</button>
+                                        <button type="button" class="btn btn-whatsapp btn-sm whatsapp-notify-btn"
+                                            {% if not m.opponent_phone %}disabled title="El oponente no tiene número registrado"{% endif %}>
+                                            Notificar por WhatsApp
+                                        </button>
+                                    </div>
+                                </form>
+
+                            {% elif match.match_status == 'proposed' and m.i_proposed %}
+                                <div class="schedule-highlight">
+                                    <div class="schedule-highlight-datetime">
+                                        <span aria-hidden="true">📅</span>
+                                        <span class="date-part">{{ match.proposed_datetime.strftime('%d/%m/%Y') }}</span>
+                                        <span class="time-part">{{ match.proposed_datetime.strftime('%H:%M') }} hs</span>
+                                    </div>
+                                    {% if match.location_label %}
+                                        <div class="schedule-highlight-location">
+                                            <span aria-hidden="true">📍</span>
+                                            <span><strong>{{ match.location_label }}</strong></span>
+                                        </div>
+                                    {% endif %}
+                                    {% if match.location_url %}
+                                        <a href="{{ match.location_url }}" target="_blank" rel="noopener noreferrer" class="schedule-map-link">Ver en Google Maps ↗</a>
+                                    {% endif %}
+                                </div>
+                                <div class="status-message status-message--waiting">
+                                    <span class="status-message-icon" aria-hidden="true">🕐</span>
+                                    <span>Esperando confirmación del oponente</span>
+                                </div>
+                                <div class="match-action-row">
+                                    <button type="button" class="btn btn-whatsapp btn-sm whatsapp-notify-btn"
+                                        data-fixed-datetime="{{ match.proposed_datetime.strftime('%Y-%m-%dT%H:%M') }}"
+                                        data-fixed-location="{{ match.location_label or '' }}"
+                                        {% if not m.opponent_phone %}disabled title="El oponente no tiene número registrado"{% endif %}>
+                                        Notificar por WhatsApp
+                                    </button>
+                                </div>
+
+                            {% elif match.match_status == 'proposed' and not m.i_proposed %}
+                                <p class="proposal-label-hint" style="margin-top: 0.75rem; margin-bottom: 0;">Tu oponente propone jugar:</p>
+                                <div class="schedule-highlight">
+                                    <div class="schedule-highlight-datetime">
+                                        <span aria-hidden="true">📅</span>
+                                        <span class="date-part">{{ match.proposed_datetime.strftime('%d/%m/%Y') }}</span>
+                                        <span class="time-part">{{ match.proposed_datetime.strftime('%H:%M') }} hs</span>
+                                    </div>
+                                    {% if match.location_label %}
+                                        <div class="schedule-highlight-location">
+                                            <span aria-hidden="true">📍</span>
+                                            <span><strong>{{ match.location_label }}</strong></span>
+                                        </div>
+                                    {% endif %}
+                                    {% if match.location_url %}
+                                        <a href="{{ match.location_url }}" target="_blank" rel="noopener noreferrer" class="schedule-map-link">Ver en Google Maps ↗</a>
+                                    {% endif %}
+                                </div>
+                                <div class="match-action-row">
+                                    <form method="post" action="/matches/{{ match.id }}/confirm">
+                                        <button type="submit" class="btn btn-accept btn-sm">✓ Aceptar fecha</button>
+                                    </form>
+                                    <form method="post" action="/matches/{{ match.id }}/reject">
+                                        <button type="submit" class="btn btn-reject btn-sm">✕ Rechazar</button>
+                                    </form>
+                                </div>
+
+                            {% elif match.match_status == 'confirmed' %}
+                                <div class="status-message status-message--confirmed">
+                                    <span class="status-message-icon" aria-hidden="true">✓</span>
+                                    <span>Fecha confirmada</span>
+                                </div>
+                                <div class="schedule-highlight">
+                                    <div class="schedule-highlight-datetime">
+                                        <span aria-hidden="true">📅</span>
+                                        <span class="date-part">{{ match.match_date.strftime('%d/%m/%Y') }}</span>
+                                        <span class="time-part">{{ match.match_date.strftime('%H:%M') }} hs</span>
+                                    </div>
+                                    {% if match.location_label %}
+                                        <div class="schedule-highlight-location">
+                                            <span aria-hidden="true">📍</span>
+                                            <span><strong>{{ match.location_label }}</strong></span>
+                                        </div>
+                                    {% endif %}
+                                    {% if match.location_url %}
+                                        <a href="{{ match.location_url }}" target="_blank" rel="noopener noreferrer" class="schedule-map-link">Ver en Google Maps ↗</a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                        {% else %}
+                            {% if match.match_status == 'confirmed' %}
+                                <div class="schedule-highlight" style="margin-top: 0.75rem;">
+                                    <div class="schedule-highlight-datetime">
+                                        <span class="date-part">{{ match.match_date.strftime('%d/%m/%Y') }}</span>
+                                        <span class="time-part">{{ match.match_date.strftime('%H:%M') }} hs</span>
+                                    </div>
+                                    {% if match.location_label %}
+                                        <div class="schedule-highlight-location"><span>📍 {{ match.location_label }}</span></div>
+                                    {% endif %}
+                                </div>
+                            {% elif match.match_status == 'proposed' and match.proposed_datetime %}
+                                <div class="schedule-highlight" style="margin-top: 0.75rem;">
+                                    <div class="schedule-highlight-datetime">
+                                        <span class="date-part">{{ match.proposed_datetime.strftime('%d/%m/%Y') }}</span>
+                                        <span class="time-part">{{ match.proposed_datetime.strftime('%H:%M') }} hs</span>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card empty-state">
+                <div class="empty-state-icon">📅</div>
+                <h3>Sin partidos próximos</h3>
+                <p>Cuando tengas partidos programados aparecerán acá para coordinar fecha y lugar.</p>
+            </div>
+        {% endif %}
+
+        <h2 class="section-title" style="margin-top: 2rem;">Historial de Partidos</h2>
         <div class="card" style="padding: 0; overflow: hidden;">
-            {% if matches %}
-                <div style="display: flex; flex-direction: column;">
-                    {% for m in matches %}
-                        <div class="match-item" style="padding: 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s;">
+            {% if played_matches %}
+                <div>
+                    {% for m in played_matches %}
+                        <div class="history-match-item">
                             <div>
-                                <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 0.25rem;">
-                                    🏆 Torneo #{{ m.match.tournament_id }}
+                                <div class="match-meta-row">
+                                    <span>🏆 {{ m.tournament_name }}</span>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.4rem;">
-                                    <span style="font-weight: 700; color: var(--primary-color);">{{ user.full_name }}</span>
-                                    <span style="color: var(--text-muted); font-size: 0.85rem;">vs</span>
-                                    <a href="/users/profile/{{ m.opponent_id }}" style="color: var(--text-color); font-weight: 600; text-decoration: none; border-bottom: 1px dashed var(--primary-light);">{{ m.opponent_name }}</a>
+                                <div class="match-card-opponent" style="margin-top: 0.4rem;">
+                                    <span class="player-name">{{ user.full_name }}</span>
+                                    <span class="vs-label">vs</span>
+                                    <a href="/users/profile/{{ m.opponent_id }}" class="opponent-link">{{ m.opponent_name }}</a>
                                 </div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">
+                                <div class="schedule-highlight-location" style="margin-top: 0.45rem;">
                                     📅 {{ m.match.match_date.strftime('%d/%m/%Y %H:%M') }}
                                 </div>
                             </div>
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; flex-shrink: 0;">
+                                <span class="match-status-badge match-status-badge--played">Jugado</span>
                                 {% if m.is_winner %}
                                     <span class="badge" style="background-color: #d1fae5; color: #065f46; font-weight: bold; font-size: 0.8rem;">Victoria</span>
                                 {% else %}
                                     <span class="badge" style="background-color: #fee2e2; color: #991b1b; font-weight: bold; font-size: 0.8rem;">Derrota</span>
                                 {% endif %}
-                                <div class="match-score-badge" style="font-size: 0.95rem; font-weight: 700;">{{ m.score }}</div>
+                                <div class="match-score-badge">{{ m.score }}</div>
                             </div>
                         </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <!-- Styled Empty State -->
-                <div style="text-align: center; padding: 5rem 2rem; color: var(--text-muted);">
-                    <div style="font-size: 4.5rem; margin-bottom: 1.5rem; animation: bounce 2s infinite;">🎾</div>
-                    <h3 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1.3rem;">¡Sin partidos jugados aún!</h3>
-                    <p style="max-width: 320px; margin: 0 auto; line-height: 1.5;">Este jugador aún no tiene partidos registrados en la plataforma. ¡Inscríbelo en un torneo para comenzar!</p>
+                <div class="empty-state" style="padding: 5rem 2rem;">
+                    <div class="empty-state-icon bounce-icon">🎾</div>
+                    <h3 style="font-size: 1.3rem;">¡Sin partidos jugados aún!</h3>
+                    <p>Este jugador aún no tiene partidos registrados en la plataforma. ¡Inscríbelo en un torneo para comenzar!</p>
                 </div>
             {% endif %}
         </div>
     </div>
 </div>
-
-<style>
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-.match-item:hover {
-    background-color: rgba(0,0,0,0.02);
-}
-</style>
 {% endblock %}

@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.registration import TournamentRegistration
 from app.models.tournament_format import TournamentFormat
 from app.schemas.tournament import TournamentCreate, TournamentUpdate
+from app.services.match_service import MatchService
 
 class TournamentService:
     @staticmethod
@@ -133,8 +134,10 @@ class TournamentService:
             stage=stage,
             group_label=group_label,
             cup_name=cup_name,
-            round_name=round_name
+            round_name=round_name,
+            match_status="pending",
         )
+        MatchService.apply_result_status(db_match, winner_id, score)
         db.add(db_match)
         db.commit()
         db.refresh(db_match)
@@ -326,8 +329,13 @@ class TournamentService:
                     tournament_id=tournament_id,
                     player1_id=p1_id,
                     player2_id=p2_id,
+                    winner_id=None,
+                    score=None,
                     stage="groups",
-                    group_label=group_label
+                    group_label=group_label,
+                    match_status="pending",
+                    proposed_datetime=None,
+                    proposed_by_id=None,
                 ))
 
         db.commit()

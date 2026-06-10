@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Notificaciones - Lercup Torneos{% endblock %}
+{% block content %}
+<div class="page-narrow">
+    <div class="notification-page-header">
+        <div>
+            <h1 style="margin-bottom: 0.25rem;">Notificaciones</h1>
+            <p class="notification-page-subtitle">
+                {% if unread_notification_count > 0 %}
+                    Tenés {{ unread_notification_count }} sin leer
+                {% else %}
+                    Estás al día
+                {% endif %}
+            </p>
+        </div>
+        {% if unread_notification_count > 0 %}
+            <form method="post" action="/notifications/mark-all-read">
+                <button type="submit" class="btn btn-outline btn-sm">Marcar todas como leídas</button>
+            </form>
+        {% endif %}
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+        {% if notifications %}
+            <div class="notification-list">
+                {% for n in notifications %}
+                    <div class="notification-item {% if not n.is_read %}notification-unread{% endif %}">
+                        <div class="notification-type-icon {% if n.type == 'match_proposed' %}notification-type-icon--proposed{% elif n.type == 'match_confirmed' %}notification-type-icon--confirmed{% elif n.type == 'match_rejected' %}notification-type-icon--rejected{% else %}notification-type-icon--default{% endif %}">
+                            {% if n.type == 'match_proposed' %}📅
+                            {% elif n.type == 'match_confirmed' %}✓
+                            {% elif n.type == 'match_rejected' %}✕
+                            {% else %}🔔{% endif %}
+                        </div>
+                        <div class="notification-body">
+                            <p class="notification-message">{{ n.message }}</p>
+                            <p class="notification-time" title="{{ n.created_at.strftime('%d/%m/%Y %H:%M') }}">{{ n.created_at | time_ago }}</p>
+                            {% if n.related_match_id %}
+                                <form method="post" action="/notifications/{{ n.id }}/read" style="margin-top: 0.6rem;">
+                                    <button type="submit" class="btn btn-outline btn-sm">Ver partido →</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                        {% if not n.is_read %}
+                            <span class="notification-dot" title="Sin leer" aria-label="Sin leer"></span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" style="padding: 4rem 2rem;">
+                <div class="empty-state-icon">🔔</div>
+                <h3>Sin notificaciones</h3>
+                <p>Cuando tu oponente proponga, confirme o rechace una fecha, vas a verlo acá.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

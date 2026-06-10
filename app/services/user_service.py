@@ -3,6 +3,7 @@ from sqlmodel import Session, select, or_
 from app.models.user import User
 from app.models.player_profile import PlayerProfile
 from app.models.match import Match
+from app.models.tournament import Tournament
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import hash_password
 
@@ -158,18 +159,23 @@ class UserService:
         return True
 
     @staticmethod
+    def _finished_matches_filter(user_id: int):
+        """Matches with a recorded result (winner_id set)."""
+        return (
+            or_(Match.player1_id == user_id, Match.player2_id == user_id),
+            Match.winner_id.isnot(None),
+        )
+
+    @staticmethod
     def get_user_stats(db: Session, user_id: int) -> Dict[str, Any]:
         """Calculate tennis statistics for a user based on finished matches."""
-        # Find all matches played by this user
         matches = db.exec(
-            select(Match).where(
-                or_(Match.player1_id == user_id, Match.player2_id == user_id)
-            )
+            select(Match).where(*UserService._finished_matches_filter(user_id))
         ).all()
-        
+
         played = len(matches)
         won = sum(1 for m in matches if m.winner_id == user_id)
-        lost = played - won
+        lost = sum(1 for m in matches if m.winner_id != user_id)
         win_rate = (won / played * 100) if played > 0 else 0.0
         
         return {
@@ -180,26 +186,47 @@ class UserService:
         }
     
     @staticmethod
-    def get_user_matches(db: Session, user_id: int) -> List[Dict[str, Any]]:
-        """Fetch all matches played by a user with opponent name and score details."""
+    def _enrich_match_for_user(db: Session, m: Match, user_id: int) -> Dict[str, Any]:
+        opponent_id = m.player2_id if m.player1_id == user_id else m.player1_id
+        opponent = db.get(User, opponent_id)
+        tournament = db.get(Tournament, m.tournament_id)
+        return {
+            "match": m,
+            "opponent_name": opponent.full_name if opponent else "Desconocido",
+            "opponent_id": opponent_id,
+            "opponent_phone": opponent.phone_number if opponent else None,
+            "tournament_name": tournament.name if tournament else f"Torneo #{m.tournament_id}",
+            "tournament_start": tournament.start_date if tournament else None,
+            "tournament_end": tournament.end_date if tournament else None,
+            "i_proposed": m.proposed_by_id == user_id,
+        }
+
+    @staticmethod
+    def get_user_upcoming_matches(db: Session, user_id: int) -> List[Dict[str, Any]]:
+        """Fetch non-played matches for a user with scheduling context."""
         matches = db.exec(
-            select(Match).where(
-                or_(Match.player1_id == user_id, Match.player2_id == user_id)
-            ).order_by(Match.match_date.desc())
+            select(Match)
+            .where(
+                or_(Match.player1_id == user_id, Match.player2_id == user_id),
+                Match.winner_id.is_(None),
+            )
+            .order_by(Match.match_date.asc())
         ).all()
-        
+        return [UserService._enrich_match_for_user(db, m, user_id) for m in matches]
+
+    @staticmethod
+    def get_user_played_matches(db: Session, user_id: int) -> List[Dict[str, Any]]:
+        """Fetch finished matches with opponent name and score details."""
+        matches = db.exec(
+            select(Match)
+            .where(*UserService._finished_matches_filter(user_id))
+            .order_by(Match.match_date.desc())
+        ).all()
+
         results = []
         for m in matches:
-            p1 = db.get(User, m.player1_id)
-            p2 = db.get(User, m.player2_id)
-            opponent = p2 if m.player1_id == user_id else p1
-            is_winner = m.winner_id == user_id
-            
-            results.append({
-                "match": m,
-                "opponent_name": opponent.full_name if opponent else "Desconocido",
-                "opponent_id": opponent.id if opponent else None,
-                "is_winner": is_winner,
-                "score": m.score or "Pendiente"
-            })
+            row = UserService._enrich_match_for_user(db, m, user_id)
+            row["is_winner"] = m.winner_id == user_id
+            row["score"] = m.score or "—"
+            results.append(row)
         return results

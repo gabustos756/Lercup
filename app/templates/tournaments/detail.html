@@ -35,19 +35,21 @@
             <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">👥 Jugadores Inscriptos</h3>
 
             {% set ns = namespace(is_registered=false) %}
-            {% for reg in registrations %}
-                {% if reg.user.id == current_user.id %}
-                    {% set ns.is_registered = true %}
-                {% endif %}
-            {% endfor %}
+            {% if current_user %}
+                {% for reg in registrations %}
+                    {% if reg.user.id == current_user.id %}
+                        {% set ns.is_registered = true %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
 
-            {% if not ns.is_registered and progress.registrations_open %}
+            {% if current_user and not ns.is_registered and progress.registrations_open %}
                 <form action="/tournaments/detail/{{ tournament.id }}/register" method="POST" style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
                     <button type="submit" class="btn btn-primary" style="width: 100%; font-weight: bold;">
                         📝 Inscribirme a este Torneo
                     </button>
                 </form>
-            {% elif not progress.registrations_open and not ns.is_registered %}
+            {% elif current_user and not progress.registrations_open and not ns.is_registered %}
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; padding: 0.5rem 0.75rem; background: var(--primary-xlight); border-radius: var(--border-radius-sm);">
                     🔒 Inscripciones cerradas
                 </p>
@@ -137,18 +139,16 @@
                                     · Libre: <span style="color: var(--primary-color);">{{ jornada.bye_player.full_name }}</span>
                                 {% endif %}
                             </div>
+                            <div class="tournament-jornada-matches">
                             {% for m in jornada.matches %}
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; {% if not loop.last %}border-bottom: 1px dashed var(--border-color);{% endif %}">
-                                    <div style="font-size: 0.85rem;">
-                                        <span style="font-weight: {% if m.winner and m.winner.id == m.player1.id %}bold{% else %}normal{% endif %};">{{ m.player1.full_name }}</span>
-                                        <span style="color: var(--text-muted);"> vs </span>
-                                        <span style="font-weight: {% if m.winner and m.winner.id == m.player2.id %}bold{% else %}normal{% endif %};">{{ m.player2.full_name }}</span>
-                                    </div>
-                                    <span style="font-family: monospace; font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">{{ m.score or 'Pendiente' }}</span>
-                                </div>
-                            {% else %}
-                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Sin partidos en esta jornada.</p>
+                                {% set jornada_key = group_label ~ '-' ~ jornada.number %}
+                                {% set show_admin_delete = false %}
+                                {% include 'partials/tournament_match_card.html' %}
                             {% endfor %}
+                            </div>
+                            {% if not jornada.matches %}
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Sin partidos en esta jornada.</p>
+                            {% endif %}
                         </div>
                     {% endfor %}
                 {% endfor %}
@@ -383,25 +383,9 @@
                     <h3 style="font-size: 1.15rem; color: var(--primary-color); margin-top: 1rem; margin-bottom: 0.75rem;">Fase de Grupos</h3>
                     {% set show_groups_header = false %}
                 {% endif %}
-                <div class="card" style="padding: 1rem; margin-bottom: 0.75rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span class="badge badge-ongoing" style="font-size: 0.65rem; margin-bottom: 0.35rem;">
-                                Grupo {{ m.group_label or 'N/A' }}{% if m.jornada_number %} · J{{ m.jornada_number }}{% endif %}
-                            </span>
-                            <div style="font-weight: {% if m.winner and m.winner.id == m.player1.id %}bold{% else %}normal{% endif %};">{{ m.player1.full_name }}</div>
-                            <div style="font-weight: {% if m.winner and m.winner.id == m.player2.id %}bold{% else %}normal{% endif %};">{{ m.player2.full_name }}</div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="font-family: monospace; font-weight: bold; background-color: var(--primary-xlight); padding: 0.25rem 0.5rem; border-radius: 4px;">{{ m.score or 'Pendiente' }}</div>
-                            {% if current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
-                                <form action="/tournaments/detail/{{ tournament.id }}/delete-match/{{ m.id }}" method="post" onsubmit="return confirm('¿Confirmas eliminar este partido?')">
-                                    <button type="submit" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.35rem; font-size: 0.7rem;">🗑️</button>
-                                </form>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+                {% set jornada_key = (m.group_label or 'G') ~ '-' ~ (m.jornada_number or m.id) %}
+                {% set show_admin_delete = true %}
+                {% include 'partials/tournament_match_card.html' %}
             {% endfor %}
 
             {% set show_first_header = true %}
@@ -410,22 +394,9 @@
                     <h3 style="font-size: 1.15rem; color: var(--primary-color); margin-top: 1.5rem; margin-bottom: 0.75rem;">Primera Ronda</h3>
                     {% set show_first_header = false %}
                 {% endif %}
-                <div class="card" style="padding: 1rem; margin-bottom: 0.75rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-weight: {% if m.winner and m.winner.id == m.player1.id %}bold{% else %}normal{% endif %};">{{ m.player1.full_name }}</div>
-                            <div style="font-weight: {% if m.winner and m.winner.id == m.player2.id %}bold{% else %}normal{% endif %};">{{ m.player2.full_name }}</div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="font-family: monospace; font-weight: bold; background-color: var(--primary-xlight); padding: 0.25rem 0.5rem; border-radius: 4px;">{{ m.score or 'Pendiente' }}</div>
-                            {% if current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
-                                <form action="/tournaments/detail/{{ tournament.id }}/delete-match/{{ m.id }}" method="post" onsubmit="return confirm('¿Confirmas eliminar?')">
-                                    <button type="submit" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.35rem; font-size: 0.7rem;">🗑️</button>
-                                </form>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+                {% set jornada_key = 'first-' ~ m.id %}
+                {% set show_admin_delete = true %}
+                {% include 'partials/tournament_match_card.html' %}
             {% endfor %}
 
             {% for cup_name, cup_color, cup_bg in [('Oro', '#d97706', '#fef3c7'), ('Plata', '#475569', '#f1f5f9'), ('Bronce', '#b45309', '#fef3c7')] %}
@@ -438,23 +409,9 @@
                         </h3>
                         {% set show_cup_header = false %}
                     {% endif %}
-                    <div class="card" style="padding: 1rem; margin-bottom: 0.75rem; border-left: 3px solid {{ cup_color }};">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <span class="badge badge-ongoing" style="font-size: 0.65rem; margin-bottom: 0.35rem; background-color: {{ cup_bg }}; color: {{ cup_color }};">{{ m.round_name or 'Playoff' }}</span>
-                                <div style="font-weight: {% if m.winner and m.winner.id == m.player1.id %}bold{% else %}normal{% endif %};">{{ m.player1.full_name }}</div>
-                                <div style="font-weight: {% if m.winner and m.winner.id == m.player2.id %}bold{% else %}normal{% endif %};">{{ m.player2.full_name }}</div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <div style="font-family: monospace; font-weight: bold; background-color: {{ cup_bg }}; color: {{ cup_color }}; padding: 0.25rem 0.5rem; border-radius: 4px;">{{ m.score or 'Pendiente' }}</div>
-                                {% if current_user and (current_user.is_admin or current_user.role in ('admin', 'tournament_admin')) %}
-                                    <form action="/tournaments/detail/{{ tournament.id }}/delete-match/{{ m.id }}" method="post" onsubmit="return confirm('¿Confirmas eliminar?')">
-                                        <button type="submit" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.35rem; font-size: 0.7rem;">🗑️</button>
-                                    </form>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
+                    {% set jornada_key = cup_name ~ '-' ~ (m.round_name or m.id) %}
+                    {% set show_admin_delete = true %}
+                    {% include 'partials/tournament_match_card.html' %}
                 {% endfor %}
             {% endfor %}
         {% else %}

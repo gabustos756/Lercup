@@ -8,7 +8,7 @@ from app.core.config import settings, database_url_for_log
 from app.core.database import engine, init_db
 from app.core.templates import flash
 from app.core.security import NotAuthenticatedException, NotAdminException
-from app.routes.web import home, auth, users, tournaments, formats
+from app.routes.web import home, auth, users, tournaments, formats, matches, notifications
 from app.routes.api import router as api_router
 from contextlib import asynccontextmanager
 
@@ -65,6 +65,8 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(tournaments.router)
 app.include_router(formats.router)
+app.include_router(matches.router)
+app.include_router(notifications.router)
 
 # Register API Routes
 app.include_router(api_router)

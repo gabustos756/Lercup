@@ -6,7 +6,7 @@ from app.core.templates import render_template, flash
 from app.models.user import User
 from app.services import TournamentService, UserService, FormatService, FixtureService
 from app.schemas.tournament import TournamentCreate, TournamentUpdate
-from app.core.security import get_current_user_or_redirect, require_admin, require_tournament_admin
+from app.core.security import get_current_user, get_current_user_or_redirect, require_admin, require_tournament_admin
 from datetime import datetime
 from typing import Optional
 
@@ -30,9 +30,9 @@ def tournament_detail(
     tournament_id: int, 
     request: Request, 
     db: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user_or_redirect)
+    current_user: Optional[User] = Depends(get_current_user),
 ):
-    """Render tournament details, showing matches and registration forms (Requires login)."""
+    """Render tournament details. Public view; scheduling panels require a logged-in player or admin."""
     tournament = TournamentService.get_tournament_by_id(db, tournament_id)
     if not tournament:
         flash(request, "Torneo no encontrado.", "danger")
@@ -52,8 +52,11 @@ def tournament_detail(
         p1 = db.get(User, m.player1_id)
         p2 = db.get(User, m.player2_id)
         w = db.get(User, m.winner_id) if m.winner_id else None
+        proposed_by = db.get(User, m.proposed_by_id) if m.proposed_by_id else None
         formatted_matches.append({
             "id": m.id,
+            "player1_id": m.player1_id,
+            "player2_id": m.player2_id,
             "player1": p1,
             "player2": p2,
             "winner": w,
@@ -64,6 +67,14 @@ def tournament_detail(
             "cup_name": m.cup_name,
             "round_name": m.round_name,
             "jornada_number": m.jornada_number,
+            "match_status": m.match_status,
+            "proposed_datetime": m.proposed_datetime,
+            "proposed_by": proposed_by,
+            "proposed_by_id": m.proposed_by_id,
+            "location_label": m.location_label,
+            "location_url": m.location_url,
+            "player1_phone": p1.phone_number if p1 else None,
+            "player2_phone": p2.phone_number if p2 else None,
         })
         
     users = UserService.get_all_users(db)  # Needed for the match recorder dropdown
@@ -107,7 +118,8 @@ def tournament_detail(
         "progress": progress,
         "playoff_bracket": playoff_bracket,
         "group_fixture": group_fixture,
-        "active_page": "tournaments"
+        "current_user": current_user,
+        "active_page": "tournaments",
     })
 
 @router.post("/detail/{tournament_id}/register")

@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Set target metadata for autogenerate support
 from sqlmodel import SQLModel
 # Import all database models so they are registered on metadata
-from app.models import User, Tournament, Match, TournamentFormat, TournamentRegistration, PlayerProfile, GroupRound
+from app.models import User, Tournament, Match, TournamentFormat, TournamentRegistration, PlayerProfile, GroupRound, Notification
 
 target_metadata = SQLModel.metadata
 

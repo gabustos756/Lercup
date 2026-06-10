@@ -14,16 +14,24 @@ class Match(SQLModel, table=True):
     winner_id: Optional[int] = Field(foreign_key="user.id", default=None)
     score: Optional[str] = Field(default=None)  # e.g. "6-4, 7-5"
     match_date: datetime = Field(default_factory=datetime.utcnow)
-    stage: str = Field(default="groups") # groups, first_round, playoffs
-    group_label: Optional[str] = Field(default=None, nullable=True) # e.g. "A", "B"
-    jornada_number: Optional[int] = Field(default=None, nullable=True) # sporting round within group (1..n)
-    cup_name: Optional[str] = Field(default=None, nullable=True) # e.g. "Oro", "Plata", "Bronce"
-    round_name: Optional[str] = Field(default=None, nullable=True) # e.g. "Semifinal", "Final", "3° Puesto"
+    stage: str = Field(default="groups")  # groups, first_round, playoffs
+    group_label: Optional[str] = Field(default=None, nullable=True)  # e.g. "A", "B"
+    jornada_number: Optional[int] = Field(default=None, nullable=True)  # sporting round within group
+    cup_name: Optional[str] = Field(default=None, nullable=True)  # e.g. "Oro", "Plata", "Bronce"
+    round_name: Optional[str] = Field(default=None, nullable=True)  # e.g. "Semifinal", "Final"
+
+    # Scheduling proposals between players
+    proposed_datetime: Optional[datetime] = Field(default=None, nullable=True)
+    proposed_by_id: Optional[int] = Field(foreign_key="user.id", default=None, nullable=True)
+    location_label: Optional[str] = Field(default=None, nullable=True)
+    location_url: Optional[str] = Field(default=None, nullable=True)
+    match_status: str = Field(
+        default="pending",
+    )  # pending, proposed, confirmed, result_pending, result_disputed, played, rejected
 
     # Relationships
     tournament: "Tournament" = Relationship(back_populates="matches")
-    
-    # Resolve ambiguity when multiple foreign keys point to the same User table
+
     player1: "User" = Relationship(
         sa_relationship_kwargs={"primaryjoin": "Match.player1_id == User.id"}
     )
@@ -32,4 +40,7 @@ class Match(SQLModel, table=True):
     )
     winner: Optional["User"] = Relationship(
         sa_relationship_kwargs={"primaryjoin": "Match.winner_id == User.id"}
+    )
+    proposed_by: Optional["User"] = Relationship(
+        sa_relationship_kwargs={"primaryjoin": "Match.proposed_by_id == User.id"}
     )

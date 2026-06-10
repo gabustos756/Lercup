@@ -20,7 +20,7 @@ def api_get_profile(user_id: int, db: Session = Depends(get_session)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado.")
     
     stats = UserService.get_user_stats(db, user_id)
-    matches = UserService.get_user_matches(db, user_id)
+    matches = UserService.get_user_played_matches(db, user_id)
     
     # Extract tennis profile
     tennis_profile = None
