@@ -1,0 +1,108 @@
+{
+  "tournament_id": 1,
+  "description": "Ejemplo: 2 grupos de 5 jugadores, 5 jornadas cada uno (round-robin impar)",
+  "groups": {
+    "A": {
+      "players": [
+        "jugador1@example.com",
+        "jugador2@example.com",
+        "jugador3@example.com",
+        "jugador4@example.com",
+        "jugador5@example.com"
+      ],
+      "jornadas": [
+        {
+          "number": 1,
+          "bye": "jugador1@example.com",
+          "matches": [
+            {"player1": "jugador2@example.com", "player2": "jugador5@example.com"},
+            {"player1": "jugador3@example.com", "player2": "jugador4@example.com"}
+          ]
+        },
+        {
+          "number": 2,
+          "bye": "jugador2@example.com",
+          "matches": [
+            {"player1": "jugador3@example.com", "player2": "jugador1@example.com"},
+            {"player1": "jugador4@example.com", "player2": "jugador5@example.com"}
+          ]
+        },
+        {
+          "number": 3,
+          "bye": "jugador3@example.com",
+          "matches": [
+            {"player1": "jugador4@example.com", "player2": "jugador2@example.com"},
+            {"player1": "jugador5@example.com", "player2": "jugador1@example.com"}
+          ]
+        },
+        {
+          "number": 4,
+          "bye": "jugador4@example.com",
+          "matches": [
+            {"player1": "jugador5@example.com", "player2": "jugador3@example.com"},
+            {"player1": "jugador1@example.com", "player2": "jugador2@example.com"}
+          ]
+        },
+        {
+          "number": 5,
+          "bye": "jugador5@example.com",
+          "matches": [
+            {"player1": "jugador1@example.com", "player2": "jugador4@example.com"},
+            {"player1": "jugador2@example.com", "player2": "jugador3@example.com"}
+          ]
+        }
+      ]
+    },
+    "B": {
+      "players": [
+        "jugador6@example.com",
+        "jugador7@example.com",
+        "jugador8@example.com",
+        "jugador9@example.com",
+        "jugador10@example.com"
+      ],
+      "jornadas": [
+        {
+          "number": 1,
+          "bye": "jugador6@example.com",
+          "matches": [
+            {"player1": "jugador7@example.com", "player2": "jugador10@example.com"},
+            {"player1": "jugador8@example.com", "player2": "jugador9@example.com"}
+          ]
+        },
+        {
+          "number": 2,
+          "bye": "jugador7@example.com",
+          "matches": [
+            {"player1": "jugador8@example.com", "player2": "jugador6@example.com"},
+            {"player1": "jugador9@example.com", "player2": "jugador10@example.com"}
+          ]
+        },
+        {
+          "number": 3,
+          "bye": "jugador8@example.com",
+          "matches": [
+            {"player1": "jugador9@example.com", "player2": "jugador7@example.com"},
+            {"player1": "jugador10@example.com", "player2": "jugador6@example.com"}
+          ]
+        },
+        {
+          "number": 4,
+          "bye": "jugador9@example.com",
+          "matches": [
+            {"player1": "jugador10@example.com", "player2": "jugador8@example.com"},
+            {"player1": "jugador6@example.com", "player2": "jugador7@example.com"}
+          ]
+        },
+        {
+          "number": 5,
+          "bye": "jugador10@example.com",
+          "matches": [
+            {"player1": "jugador6@example.com", "player2": "jugador9@example.com"},
+            {"player1": "jugador7@example.com", "player2": "jugador8@example.com"}
+          ]
+        }
+      ]
+    }
+  }
+}

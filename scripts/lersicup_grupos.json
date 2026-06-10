@@ -1,0 +1,167 @@
+{
+    "tournament_id": 1,
+    "groups": {
+      "A": {
+        "players": [
+          "nicocafure@gmail.com",
+          "tomas.epstein@gmail.com",
+          "drogueriamileniumsas@gmail.com",
+          "gabrielbustos2@hotmail.com",
+          "urcelaynico@gmail.com"
+        ],
+        "jornadas": [
+          {
+            "number": 1,
+            "bye": "nicocafure@gmail.com",
+            "matches": [
+              {
+                "player1": "urcelaynico@gmail.com",
+                "player2": "tomas.epstein@gmail.com"
+              },
+              {
+                "player1": "gabrielbustos2@hotmail.com",
+                "player2": "drogueriamileniumsas@gmail.com"
+              }
+            ]
+          },
+          {
+            "number": 2,
+            "bye": "drogueriamileniumsas@gmail.com",
+            "matches": [
+              {
+                "player1": "gabrielbustos2@hotmail.com",
+                "player2": "urcelaynico@gmail.com"
+              },
+              {
+                "player1": "nicocafure@gmail.com",
+                "player2": "tomas.epstein@gmail.com"
+              }
+            ]
+          },
+          {
+            "number": 3,
+            "bye": "tomas.epstein@gmail.com",
+            "matches": [
+              {
+                "player1": "drogueriamileniumsas@gmail.com",
+                "player2": "urcelaynico@gmail.com"
+              },
+              {
+                "player1": "gabrielbustos2@hotmail.com",
+                "player2": "nicocafure@gmail.com"
+              }
+            ]
+          },
+          {
+            "number": 4,
+            "bye": "gabrielbustos2@hotmail.com",
+            "matches": [
+              {
+                "player1": "nicocafure@gmail.com",
+                "player2": "urcelaynico@gmail.com"
+              },
+              {
+                "player1": "tomas.epstein@gmail.com",
+                "player2": "drogueriamileniumsas@gmail.com"
+              }
+            ]
+          },
+          {
+            "number": 5,
+            "bye": "urcelaynico@gmail.com",
+            "matches": [
+              {
+                "player1": "tomas.epstein@gmail.com",
+                "player2": "gabrielbustos2@hotmail.com"
+              },
+              {
+                "player1": "drogueriamileniumsas@gmail.com",
+                "player2": "nicocafure@gmail.com"
+              }
+            ]
+          }
+        ]
+      },
+      "B": {
+        "players": [
+          "andres@pedix.app",
+          "felipe_testa12@hotmail.com",
+          "ilangge@hotmail.com",
+          "tomas.vallet@hotmail.com",
+          "fsposetti@icloud.com"
+        ],
+        "jornadas": [
+          {
+            "number": 1,
+            "bye": "ilangge@hotmail.com",
+            "matches": [
+              {
+                "player1": "tomas.vallet@hotmail.com",
+                "player2": "felipe_testa12@hotmail.com"
+              },
+              {
+                "player1": "andres@pedix.app",
+                "player2": "fsposetti@icloud.com"
+              }
+            ]
+          },
+          {
+            "number": 2,
+            "bye": "felipe_testa12@hotmail.com",
+            "matches": [
+              {
+                "player1": "andres@pedix.app",
+                "player2": "ilangge@hotmail.com"
+              },
+              {
+                "player1": "tomas.vallet@hotmail.com",
+                "player2": "fsposetti@icloud.com"
+              }
+            ]
+          },
+          {
+            "number": 3,
+            "bye": "fsposetti@icloud.com",
+            "matches": [
+              {
+                "player1": "andres@pedix.app",
+                "player2": "tomas.vallet@hotmail.com"
+              },
+              {
+                "player1": "ilangge@hotmail.com",
+                "player2": "felipe_testa12@hotmail.com"
+              }
+            ]
+          },
+          {
+            "number": 4,
+            "bye": "tomas.vallet@hotmail.com",
+            "matches": [
+              {
+                "player1": "andres@pedix.app",
+                "player2": "felipe_testa12@hotmail.com"
+              },
+              {
+                "player1": "fsposetti@icloud.com",
+                "player2": "ilangge@hotmail.com"
+              }
+            ]
+          },
+          {
+            "number": 5,
+            "bye": "andres@pedix.app",
+            "matches": [
+              {
+                "player1": "felipe_testa12@hotmail.com",
+                "player2": "fsposetti@icloud.com"
+              },
+              {
+                "player1": "tomas.vallet@hotmail.com",
+                "player2": "ilangge@hotmail.com"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }

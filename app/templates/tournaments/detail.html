@@ -123,6 +123,38 @@
             </div>
         {% endif %}
 
+        <!-- Group fixture by jornada -->
+        {% if group_fixture %}
+            <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+                <h3 style="font-weight: 700; color: var(--primary-color); margin-bottom: 1.25rem;">📅 Fixture por Jornadas</h3>
+                {% for group_label, jornadas in group_fixture.items() %}
+                    <h4 style="font-size: 0.95rem; color: var(--accent-color); margin-bottom: 0.75rem;">Grupo {{ group_label }}</h4>
+                    {% for jornada in jornadas %}
+                        <div style="margin-bottom: 1rem; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: #fafafa;">
+                            <div style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                Jornada {{ jornada.number }}
+                                {% if jornada.bye_player %}
+                                    · Libre: <span style="color: var(--primary-color);">{{ jornada.bye_player.full_name }}</span>
+                                {% endif %}
+                            </div>
+                            {% for m in jornada.matches %}
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; {% if not loop.last %}border-bottom: 1px dashed var(--border-color);{% endif %}">
+                                    <div style="font-size: 0.85rem;">
+                                        <span style="font-weight: {% if m.winner and m.winner.id == m.player1.id %}bold{% else %}normal{% endif %};">{{ m.player1.full_name }}</span>
+                                        <span style="color: var(--text-muted);"> vs </span>
+                                        <span style="font-weight: {% if m.winner and m.winner.id == m.player2.id %}bold{% else %}normal{% endif %};">{{ m.player2.full_name }}</span>
+                                    </div>
+                                    <span style="font-family: monospace; font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">{{ m.score or 'Pendiente' }}</span>
+                                </div>
+                            {% else %}
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Sin partidos en esta jornada.</p>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
         <!-- Playoff Bracket -->
         {% if playoff_bracket %}
             <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
@@ -354,7 +386,9 @@
                 <div class="card" style="padding: 1rem; margin-bottom: 0.75rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <span class="badge badge-ongoing" style="font-size: 0.65rem; margin-bottom: 0.35rem;">Grupo {{ m.group_label or 'N/A' }}</span>
+                            <span class="badge badge-ongoing" style="font-size: 0.65rem; margin-bottom: 0.35rem;">
+                                Grupo {{ m.group_label or 'N/A' }}{% if m.jornada_number %} · J{{ m.jornada_number }}{% endif %}
+                            </span>
                             <div style="font-weight: {% if m.winner and m.winner.id == m.player1.id %}bold{% else %}normal{% endif %};">{{ m.player1.full_name }}</div>
                             <div style="font-weight: {% if m.winner and m.winner.id == m.player2.id %}bold{% else %}normal{% endif %};">{{ m.player2.full_name }}</div>
                         </div>

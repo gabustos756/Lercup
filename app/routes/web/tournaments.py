@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 from app.core.database import get_session
 from app.core.templates import render_template, flash
 from app.models.user import User
-from app.services import TournamentService, UserService, FormatService
+from app.services import TournamentService, UserService, FormatService, FixtureService
 from app.schemas.tournament import TournamentCreate, TournamentUpdate
 from app.core.security import get_current_user_or_redirect, require_admin, require_tournament_admin
 from datetime import datetime
@@ -62,7 +62,8 @@ def tournament_detail(
             "stage": m.stage,
             "group_label": m.group_label,
             "cup_name": m.cup_name,
-            "round_name": m.round_name
+            "round_name": m.round_name,
+            "jornada_number": m.jornada_number,
         })
         
     users = UserService.get_all_users(db)  # Needed for the match recorder dropdown
@@ -94,6 +95,7 @@ def tournament_detail(
 
     progress = TournamentService.get_tournament_progress(db, tournament_id)
     playoff_bracket = TournamentService.get_playoff_bracket(db, tournament_id)
+    group_fixture = FixtureService.get_group_fixture_view(db, tournament_id)
             
     return render_template(request, db, "tournaments/detail.html", {
         "tournament": tournament,
@@ -104,6 +106,7 @@ def tournament_detail(
         "registrations": reg_details,
         "progress": progress,
         "playoff_bracket": playoff_bracket,
+        "group_fixture": group_fixture,
         "active_page": "tournaments"
     })
 

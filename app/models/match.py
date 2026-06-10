@@ -16,6 +16,7 @@ class Match(SQLModel, table=True):
     match_date: datetime = Field(default_factory=datetime.utcnow)
     stage: str = Field(default="groups") # groups, first_round, playoffs
     group_label: Optional[str] = Field(default=None, nullable=True) # e.g. "A", "B"
+    jornada_number: Optional[int] = Field(default=None, nullable=True) # sporting round within group (1..n)
     cup_name: Optional[str] = Field(default=None, nullable=True) # e.g. "Oro", "Plata", "Bronce"
     round_name: Optional[str] = Field(default=None, nullable=True) # e.g. "Semifinal", "Final", "3° Puesto"
 

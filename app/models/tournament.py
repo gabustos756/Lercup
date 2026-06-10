@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from app.models.registration import TournamentRegistration
     from app.models.match import Match
     from app.models.tournament_format import TournamentFormat
+    from app.models.group_round import GroupRound
 
 class Tournament(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -32,4 +33,8 @@ class Tournament(SQLModel, table=True):
     matches: List["Match"] = Relationship(
         back_populates="tournament", 
         sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
+    group_rounds: List["GroupRound"] = Relationship(
+        back_populates="tournament",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
