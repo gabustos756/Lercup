@@ -617,6 +617,21 @@ body > header {
     color: var(--text-muted);
 }
 
+.tournament-match-schedule-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.15rem;
+}
+
+.match-change-request-form {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border-color);
+}
+
 .match-location-links {
     margin-top: 0.35rem;
 }

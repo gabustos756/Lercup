@@ -89,6 +89,42 @@ def propose_match_datetime(
     )
 
 
+@router.post("/{match_id}/request-change")
+def request_match_change(
+    match_id: int,
+    request: Request,
+    proposed_datetime: str = Form(...),
+    location_label: Optional[str] = Form(None),
+    location_url: Optional[str] = Form(None),
+    return_url: Optional[str] = Form(None),
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user_or_redirect),
+):
+    """Player requests a schedule change on a confirmed match."""
+    try:
+        dt = datetime.fromisoformat(proposed_datetime)
+    except ValueError:
+        flash(request, "Formato de fecha y hora inválido.", "danger")
+        return _redirect_after_action(current_user, return_url)
+
+    norm_label, norm_url = normalize_location_fields(location_label, location_url)
+
+    return _handle_match_action(
+        request,
+        current_user,
+        lambda: MatchService.request_match_change(
+            db,
+            match_id,
+            current_user.id,
+            dt,
+            location_label=norm_label,
+            location_url=norm_url,
+        ),
+        "Pedido de cambio enviado. Esperá la confirmación de tu oponente o un admin.",
+        return_url,
+    )
+
+
 @router.post("/{match_id}/confirm")
 def confirm_match_datetime(
     match_id: int,
@@ -97,12 +133,12 @@ def confirm_match_datetime(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user_or_redirect),
 ):
-    """Opponent confirms the proposed date."""
+    """Opponent or admin confirms the proposed date or change request."""
     return _handle_match_action(
         request,
         current_user,
         lambda: MatchService.confirm_match_datetime(db, match_id, current_user.id),
-        "Fecha confirmada. ¡A jugar!",
+        "Cambio confirmado. ¡A jugar!",
         return_url,
     )
 
@@ -115,12 +151,12 @@ def reject_match_datetime(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user_or_redirect),
 ):
-    """Opponent rejects the proposed date."""
+    """Opponent or admin rejects the proposal or change request."""
     return _handle_match_action(
         request,
         current_user,
         lambda: MatchService.reject_match_datetime(db, match_id, current_user.id),
-        "Propuesta rechazada. Podés proponer una nueva fecha.",
+        "Solicitud rechazada.",
         return_url,
     )
 

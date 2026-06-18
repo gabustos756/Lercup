@@ -73,6 +73,9 @@ def tournament_detail(
             "proposed_by_id": m.proposed_by_id,
             "location_label": m.location_label,
             "location_url": m.location_url,
+            "is_change_request": m.is_change_request,
+            "proposed_location_label": m.proposed_location_label,
+            "proposed_location_url": m.proposed_location_url,
             "player1_phone": p1.phone_number if p1 else None,
             "player2_phone": p2.phone_number if p2 else None,
         })

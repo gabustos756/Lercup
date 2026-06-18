@@ -115,7 +115,9 @@
                                 <span class="match-status-badge match-status-badge--pending">Pendiente</span>
                             {% elif match.match_status == 'proposed' %}
                                 <span class="match-status-badge match-status-badge--proposed">
-                                    {% if m.i_proposed %}Propuesta enviada{% else %}Propuesta recibida{% endif %}
+                                    {% if match.is_change_request %}
+                                        {% if m.i_proposed %}Cambio solicitado{% else %}Cambio pendiente{% endif %}
+                                    {% elif m.i_proposed %}Propuesta enviada{% else %}Propuesta recibida{% endif %}
                                 </span>
                             {% elif match.match_status == 'confirmed' %}
                                 <span class="match-status-badge match-status-badge--confirmed">Confirmado</span>
@@ -167,57 +169,79 @@
                                 </form>
 
                             {% elif match.match_status == 'proposed' and m.i_proposed %}
+                                {% set proposal_location_label = match.proposed_location_label if match.is_change_request else match.location_label %}
+                                {% set proposal_location_url = match.proposed_location_url if match.is_change_request else match.location_url %}
+                                {% if match.is_change_request %}
+                                    <p class="proposal-label-hint" style="margin-top: 0.75rem; margin-bottom: 0.35rem;">Fecha confirmada actual:</p>
+                                    <div class="schedule-highlight" style="margin-bottom: 0.75rem;">
+                                        <div class="schedule-highlight-datetime">
+                                            <span class="date-part">{{ match.match_date.strftime('%d/%m/%Y') }}</span>
+                                            <span class="time-part">{{ match.match_date.strftime('%H:%M') }} hs</span>
+                                        </div>
+                                        {% if match.location_label %}
+                                            <div class="schedule-highlight-location"><span>📍 {{ match.location_label }}</span></div>
+                                        {% endif %}
+                                    </div>
+                                    <p class="proposal-label-hint" style="margin-bottom: 0.35rem;">Cambio propuesto:</p>
+                                {% endif %}
                                 <div class="schedule-highlight">
                                     <div class="schedule-highlight-datetime">
                                         <span aria-hidden="true">📅</span>
                                         <span class="date-part">{{ match.proposed_datetime.strftime('%d/%m/%Y') }}</span>
                                         <span class="time-part">{{ match.proposed_datetime.strftime('%H:%M') }} hs</span>
                                     </div>
-                                    {% if match.location_label %}
+                                    {% if proposal_location_label %}
                                         <div class="schedule-highlight-location">
                                             <span aria-hidden="true">📍</span>
-                                            <span><strong>{{ match.location_label }}</strong></span>
+                                            <span><strong>{{ proposal_location_label }}</strong></span>
                                         </div>
                                     {% endif %}
-                                    {% set loc_label = match.location_label %}
-                                    {% set loc_url = match.location_url %}
+                                    {% set loc_label = proposal_location_label %}
+                                    {% set loc_url = proposal_location_url %}
                                     {% include "partials/match_location_links.html" %}
                                 </div>
                                 <div class="status-message status-message--waiting">
                                     <span class="status-message-icon" aria-hidden="true">🕐</span>
-                                    <span>Esperando confirmación del oponente</span>
+                                    <span>{% if match.is_change_request %}Esperando confirmación del cambio{% else %}Esperando confirmación del oponente{% endif %}</span>
                                 </div>
                                 <div class="match-action-row">
                                     <button type="button" class="btn btn-whatsapp btn-sm whatsapp-notify-btn"
                                         data-fixed-datetime="{{ match.proposed_datetime.strftime('%Y-%m-%dT%H:%M') }}"
-                                        data-fixed-location="{{ match.location_label or '' }}"
-                                        data-fixed-location-url="{{ match.location_url or '' }}"
+                                        data-fixed-location="{{ proposal_location_label or '' }}"
+                                        data-fixed-location-url="{{ proposal_location_url or '' }}"
                                         {% if not m.opponent_phone %}disabled title="El oponente no tiene número registrado"{% endif %}>
                                         Notificar por WhatsApp
                                     </button>
                                 </div>
 
                             {% elif match.match_status == 'proposed' and not m.i_proposed %}
-                                <p class="proposal-label-hint" style="margin-top: 0.75rem; margin-bottom: 0;">Tu oponente propone jugar:</p>
+                                {% set proposal_location_label = match.proposed_location_label if match.is_change_request else match.location_label %}
+                                {% set proposal_location_url = match.proposed_location_url if match.is_change_request else match.location_url %}
+                                <p class="proposal-label-hint" style="margin-top: 0.75rem; margin-bottom: 0;">
+                                    {% if match.is_change_request %}Tu oponente pide cambiar a:{% else %}Tu oponente propone jugar:{% endif %}
+                                </p>
+                                {% if match.is_change_request %}
+                                    <p class="proposal-label-hint" style="margin-bottom: 0.35rem;">Fecha actual: {{ match.match_date.strftime('%d/%m/%Y %H:%M') }} hs</p>
+                                {% endif %}
                                 <div class="schedule-highlight">
                                     <div class="schedule-highlight-datetime">
                                         <span aria-hidden="true">📅</span>
                                         <span class="date-part">{{ match.proposed_datetime.strftime('%d/%m/%Y') }}</span>
                                         <span class="time-part">{{ match.proposed_datetime.strftime('%H:%M') }} hs</span>
                                     </div>
-                                    {% if match.location_label %}
+                                    {% if proposal_location_label %}
                                         <div class="schedule-highlight-location">
                                             <span aria-hidden="true">📍</span>
-                                            <span><strong>{{ match.location_label }}</strong></span>
+                                            <span><strong>{{ proposal_location_label }}</strong></span>
                                         </div>
                                     {% endif %}
-                                    {% set loc_label = match.location_label %}
-                                    {% set loc_url = match.location_url %}
+                                    {% set loc_label = proposal_location_label %}
+                                    {% set loc_url = proposal_location_url %}
                                     {% include "partials/match_location_links.html" %}
                                 </div>
                                 <div class="match-action-row">
                                     <form method="post" action="/matches/{{ match.id }}/confirm">
-                                        <button type="submit" class="btn btn-accept btn-sm">✓ Aceptar fecha</button>
+                                        <button type="submit" class="btn btn-accept btn-sm">✓ Aceptar</button>
                                     </form>
                                     <form method="post" action="/matches/{{ match.id }}/reject">
                                         <button type="submit" class="btn btn-reject btn-sm">✕ Rechazar</button>
@@ -245,6 +269,9 @@
                                     {% set loc_url = match.location_url %}
                                     {% include "partials/match_location_links.html" %}
                                 </div>
+                                {% with prefix='change_' ~ match.id|string, match_id=match.id, tournament_start=m.tournament_start, tournament_end=m.tournament_end, opponent_phone=m.opponent_phone %}
+                                    {% include "partials/match_change_request_form.html" %}
+                                {% endwith %}
                             {% endif %}
 
                         {% else %}

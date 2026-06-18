@@ -11,6 +11,7 @@ from app.services.notification_service import NotificationService
 
 PROPOSABLE_STATUSES = ("pending", "rejected")
 ACTIVE_PROPOSAL_STATUS = "proposed"
+CONFIRMED_STATUS = "confirmed"
 
 
 class MatchService:
@@ -44,7 +45,7 @@ class MatchService:
 
     @staticmethod
     def _is_admin(user: User) -> bool:
-        return user.role == "admin" or user.is_admin
+        return user.role in ("admin", "tournament_admin") or user.is_admin
 
     @staticmethod
     def _ensure_not_played(match: Match) -> None:
@@ -114,6 +115,48 @@ class MatchService:
         db.commit()
         db.refresh(match)
         return match
+
+    @staticmethod
+    def _clear_proposal_fields(match: Match) -> None:
+        match.proposed_datetime = None
+        match.proposed_by_id = None
+        match.proposed_location_label = None
+        match.proposed_location_url = None
+        match.is_change_request = False
+
+    @staticmethod
+    def _proposal_location_label(match: Match) -> Optional[str]:
+        if match.is_change_request:
+            return match.proposed_location_label
+        return match.location_label
+
+    @staticmethod
+    def _proposal_location_url(match: Match) -> Optional[str]:
+        if match.is_change_request:
+            return match.proposed_location_url
+        return match.location_url
+
+    @staticmethod
+    def _apply_confirmed_proposal(match: Match) -> None:
+        if not match.proposed_datetime:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La propuesta no tiene fecha definida.",
+            )
+
+        match.match_date = match.proposed_datetime
+
+        if match.is_change_request:
+            if match.proposed_location_label is not None:
+                match.location_label = match.proposed_location_label
+            if match.proposed_location_url is not None:
+                match.location_url = match.proposed_location_url
+        elif match.location_label is None and match.proposed_location_label:
+            match.location_label = match.proposed_location_label
+            match.location_url = match.proposed_location_url
+
+        MatchService._clear_proposal_fields(match)
+        match.match_status = CONFIRMED_STATUS
 
     @staticmethod
     def _get_opponent_id(match: Match, user_id: int) -> int:
@@ -203,10 +246,54 @@ class MatchService:
         return match
 
     @staticmethod
-    def confirm_match_datetime(db: Session, match_id: int, user_id: int) -> Match:
-        """Opponent confirms the proposed date."""
+    def request_match_change(
+        db: Session,
+        match_id: int,
+        user_id: int,
+        proposed_datetime: datetime,
+        location_label: Optional[str] = None,
+        location_url: Optional[str] = None,
+    ) -> Match:
+        """Player requests a schedule change on a confirmed match (needs opponent/admin approval)."""
         match = MatchService._get_match_or_404(db, match_id)
         MatchService._get_user_or_404(db, user_id)
+        MatchService._ensure_not_played(match)
+        MatchService._ensure_is_player(match, user_id)
+
+        if match.match_status != CONFIRMED_STATUS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Solo se pueden solicitar cambios en partidos confirmados.",
+            )
+
+        MatchService.validate_proposed_datetime(
+            db, match.tournament_id, proposed_datetime
+        )
+
+        match.proposed_datetime = proposed_datetime
+        match.proposed_by_id = user_id
+        match.proposed_location_label = location_label
+        match.proposed_location_url = location_url
+        match.is_change_request = True
+        match.match_status = ACTIVE_PROPOSAL_STATUS
+
+        match = MatchService._save_match(db, match)
+        opponent_id = MatchService._get_opponent_id(match, user_id)
+        description = MatchService._match_description(db, match)
+        MatchService._notify_match_event(
+            db,
+            match,
+            opponent_id,
+            "match_change_requested",
+            f"Tu oponente pidió cambiar la fecha del partido {description}.",
+        )
+        return match
+
+    @staticmethod
+    def confirm_match_datetime(db: Session, match_id: int, user_id: int) -> Match:
+        """Opponent or admin confirms the proposed date or change request."""
+        match = MatchService._get_match_or_404(db, match_id)
+        user = MatchService._get_user_or_404(db, user_id)
         MatchService._ensure_not_played(match)
 
         if match.match_status != ACTIVE_PROPOSAL_STATUS:
@@ -215,35 +302,33 @@ class MatchService:
                 detail="No hay una propuesta pendiente para confirmar.",
             )
 
-        MatchService._ensure_is_opponent(match, user_id)
+        is_admin = MatchService._is_admin(user)
+        if not is_admin:
+            MatchService._ensure_is_opponent(match, user_id)
 
-        if not match.proposed_datetime:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="La propuesta no tiene fecha definida.",
-            )
-
-        match.match_date = match.proposed_datetime
-        match.match_status = "confirmed"
+        was_change = match.is_change_request
+        proposer_id = match.proposed_by_id
+        MatchService._apply_confirmed_proposal(match)
 
         match = MatchService._save_match(db, match)
-        proposer_id = match.proposed_by_id
-        if proposer_id:
+        if proposer_id and proposer_id != user_id:
             description = MatchService._match_description(db, match)
+            if was_change:
+                message = f"Se aprobó el cambio de fecha del partido {description}."
+                notif_type = "match_change_confirmed"
+            else:
+                message = f"Tu oponente aceptó la fecha del partido {description}."
+                notif_type = "match_confirmed"
             MatchService._notify_match_event(
-                db,
-                match,
-                proposer_id,
-                "match_confirmed",
-                f"Tu oponente aceptó la fecha del partido {description}.",
+                db, match, proposer_id, notif_type, message
             )
         return match
 
     @staticmethod
     def reject_match_datetime(db: Session, match_id: int, user_id: int) -> Match:
-        """Opponent rejects the proposal; scheduling fields are cleared."""
+        """Opponent or admin rejects the proposal or change request."""
         match = MatchService._get_match_or_404(db, match_id)
-        MatchService._get_user_or_404(db, user_id)
+        user = MatchService._get_user_or_404(db, user_id)
         MatchService._ensure_not_played(match)
 
         if match.match_status != ACTIVE_PROPOSAL_STATUS:
@@ -252,25 +337,33 @@ class MatchService:
                 detail="No hay una propuesta pendiente para rechazar.",
             )
 
-        MatchService._ensure_is_opponent(match, user_id)
+        is_admin = MatchService._is_admin(user)
+        if not is_admin:
+            MatchService._ensure_is_opponent(match, user_id)
 
+        was_change = match.is_change_request
         proposer_id = match.proposed_by_id
         description = MatchService._match_description(db, match)
 
-        match.proposed_datetime = None
-        match.proposed_by_id = None
-        match.location_label = None
-        match.location_url = None
-        match.match_status = "pending"
+        if was_change:
+            MatchService._clear_proposal_fields(match)
+            match.match_status = CONFIRMED_STATUS
+        else:
+            MatchService._clear_proposal_fields(match)
+            match.location_label = None
+            match.location_url = None
+            match.match_status = "pending"
 
         match = MatchService._save_match(db, match)
-        if proposer_id:
+        if proposer_id and proposer_id != user_id:
+            if was_change:
+                message = f"Se rechazó el cambio de fecha del partido {description}."
+                notif_type = "match_change_rejected"
+            else:
+                message = f"Tu oponente rechazó la fecha del partido {description}."
+                notif_type = "match_rejected"
             MatchService._notify_match_event(
-                db,
-                match,
-                proposer_id,
-                "match_rejected",
-                f"Tu oponente rechazó la fecha del partido {description}.",
+                db, match, proposer_id, notif_type, message
             )
         return match
 
@@ -305,7 +398,8 @@ class MatchService:
         match.match_date = proposed_datetime
         match.location_label = location_label
         match.location_url = location_url
-        match.match_status = "confirmed"
+        MatchService._clear_proposal_fields(match)
+        match.match_status = CONFIRMED_STATUS
 
         return MatchService._save_match(db, match)
 

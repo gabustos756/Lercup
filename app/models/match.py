@@ -25,6 +25,9 @@ class Match(SQLModel, table=True):
     proposed_by_id: Optional[int] = Field(foreign_key="user.id", default=None, nullable=True)
     location_label: Optional[str] = Field(default=None, nullable=True)
     location_url: Optional[str] = Field(default=None, nullable=True)
+    is_change_request: bool = Field(default=False)
+    proposed_location_label: Optional[str] = Field(default=None, nullable=True)
+    proposed_location_url: Optional[str] = Field(default=None, nullable=True)
     match_status: str = Field(
         default="pending",
     )  # pending, proposed, confirmed, result_pending, result_disputed, played, rejected

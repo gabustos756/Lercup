@@ -1,0 +1,30 @@
+{# prefix, match_id, tournament_start, tournament_end (optional), return_url (optional), opponent_phone (optional) #}
+<form class="match-proposal-form match-change-request-form" method="post" action="/matches/{{ match_id }}/request-change">
+    {% if return_url %}
+        <input type="hidden" name="return_url" value="{{ return_url }}">
+    {% endif %}
+    <p class="proposal-label-hint" style="margin-top: 0;">Pedí un cambio de fecha o lugar. Tu oponente o un admin debe aprobarlo.</p>
+    <div class="form-group">
+        <label for="change_datetime_{{ prefix }}">Nueva fecha y hora</label>
+        <input type="datetime-local"
+               id="change_datetime_{{ prefix }}"
+               name="proposed_datetime"
+               class="form-control proposal-datetime-input"
+               required
+               {% if tournament_start %}min="{{ tournament_start.strftime('%Y-%m-%dT%H:%M') }}"{% endif %}
+               {% if tournament_end %}max="{{ tournament_end.strftime('%Y-%m-%dT%H:%M') }}"{% endif %}>
+        {% if tournament_start and tournament_end %}
+            <p class="proposal-label-hint">Rango del torneo: {{ tournament_start.strftime('%d/%m/%Y') }} – {{ tournament_end.strftime('%d/%m/%Y') }}</p>
+        {% endif %}
+    </div>
+    {% with prefix=prefix %}
+        {% include "partials/match_location_picker.html" %}
+    {% endwith %}
+    <div class="match-action-row">
+        <button type="submit" class="btn btn-primary btn-sm">Solicitar cambio</button>
+        <button type="button" class="btn btn-whatsapp btn-sm whatsapp-notify-btn"
+            {% if opponent_phone is defined and not opponent_phone %}disabled title="El oponente no tiene número registrado"{% endif %}>
+            Notificar por WhatsApp
+        </button>
+    </div>
+</form>
