@@ -5,6 +5,7 @@ from sqlmodel import Session
 from app.models.user import User
 from app.services.notification_service import NotificationService
 from app.core.time_utils import time_ago, format_match_datetime
+from app.core.map_utils import map_search_url
 from typing import Optional
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
@@ -15,13 +16,14 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 def static_asset_version() -> str:
     """Cache-busting token from newest static asset mtime."""
     latest = 0.0
-    for pattern in ("css/app.css", "js/app.js"):
+    for pattern in ("css/app.css", "js/app.js", "js/location-picker.js"):
         path = STATIC_DIR / pattern
         if path.exists():
             latest = max(latest, path.stat().st_mtime)
     return str(int(latest)) if latest else "1"
 templates.env.filters["time_ago"] = time_ago
 templates.env.filters["format_match_datetime"] = format_match_datetime
+templates.env.filters["map_search_url"] = map_search_url
 
 def flash(request: Request, message: str, category: str = "info"):
     """

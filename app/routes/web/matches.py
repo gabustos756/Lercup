@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from sqlmodel import Session
 
 from app.core.database import get_session
+from app.core.map_utils import normalize_location_fields
 from app.core.security import get_current_user_or_redirect, require_admin
 from app.core.templates import flash
 from app.models.user import User
@@ -70,6 +71,8 @@ def propose_match_datetime(
         flash(request, "Formato de fecha y hora inválido.", "danger")
         return _redirect_after_action(current_user, return_url)
 
+    norm_label, norm_url = normalize_location_fields(location_label, location_url)
+
     return _handle_match_action(
         request,
         current_user,
@@ -78,8 +81,8 @@ def propose_match_datetime(
             match_id,
             current_user.id,
             dt,
-            location_label=location_label.strip() if location_label and location_label.strip() else None,
-            location_url=location_url.strip() if location_url and location_url.strip() else None,
+            location_label=norm_label,
+            location_url=norm_url,
         ),
         "Propuesta de fecha enviada. Esperá la confirmación de tu oponente.",
         return_url,
@@ -141,14 +144,16 @@ def admin_set_match_datetime(
         safe_url = _safe_return_url(return_url)
         return RedirectResponse(url=safe_url or "/tournaments", status_code=303)
 
+    norm_label, norm_url = normalize_location_fields(location_label, location_url)
+
     try:
         match = MatchService.admin_set_match_datetime(
             db,
             match_id,
             admin_user,
             dt,
-            location_label=location_label.strip() if location_label and location_label.strip() else None,
-            location_url=location_url.strip() if location_url and location_url.strip() else None,
+            location_label=norm_label,
+            location_url=norm_url,
         )
         flash(request, "Fecha del partido establecida por el administrador.", "success")
         safe_url = _safe_return_url(return_url)

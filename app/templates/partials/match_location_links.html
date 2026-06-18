@@ -1,0 +1,6 @@
+{# Expects: loc_label, loc_url (optional) #}
+{% if loc_url %}
+    <a href="{{ loc_url }}" target="_blank" rel="noopener noreferrer" class="schedule-map-link">Ver en Google Maps ↗</a>
+{% elif loc_label %}
+    <a href="{{ loc_label | map_search_url('google') }}" target="_blank" rel="noopener noreferrer" class="schedule-map-link">Ver en Google Maps ↗</a>
+{% endif %}

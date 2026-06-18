@@ -70,9 +70,9 @@
                     {% if m.location_label %}
                         <p class="tournament-match-schedule-location">📍 {{ m.location_label }}</p>
                     {% endif %}
-                    {% if m.location_url %}
-                        <a href="{{ m.location_url }}" target="_blank" rel="noopener noreferrer" class="schedule-map-link">Ver en Maps ↗</a>
-                    {% endif %}
+                    {% set loc_label = m.location_label %}
+                    {% set loc_url = m.location_url %}
+                    {% include "partials/match_location_links.html" %}
                     {% if m.proposed_by and match_status == 'proposed' %}
                         <p class="tournament-match-proposed-by">Propuesto por {{ m.proposed_by.full_name }}</p>
                     {% endif %}
@@ -123,15 +123,8 @@
                                        max="{{ tournament.end_date.strftime('%Y-%m-%dT%H:%M') }}">
                                 <p class="proposal-label-hint">Rango del torneo: {{ tournament.start_date.strftime('%d/%m/%Y') }} – {{ tournament.end_date.strftime('%d/%m/%Y') }}</p>
                             </div>
-                            <div class="form-group">
-                                <label for="location_label_{{ m.id }}">Lugar <span class="form-label-optional">(opcional)</span></label>
-                                <input type="text" id="location_label_{{ m.id }}" name="location_label"
-                                       class="form-control proposal-location-input" placeholder="Ej: Cancha 3, Club Laler">
-                            </div>
-                            <div class="form-group">
-                                <label for="location_url_{{ m.id }}">URL Google Maps <span class="form-label-optional">(opcional)</span></label>
-                                <input type="url" id="location_url_{{ m.id }}" name="location_url" class="form-control" placeholder="https://maps.google.com/...">
-                            </div>
+                            {% set prefix = m.id %}
+                            {% include "partials/match_location_picker.html" %}
                             <div class="match-action-row">
                                 <button type="submit" class="btn btn-primary btn-sm">Confirmar propuesta</button>
                                 <button type="button" class="btn btn-whatsapp btn-sm whatsapp-notify-btn"
@@ -150,6 +143,7 @@
                             <button type="button" class="btn btn-whatsapp btn-sm whatsapp-notify-btn"
                                 data-fixed-datetime="{{ m.proposed_datetime.strftime('%Y-%m-%dT%H:%M') if m.proposed_datetime else '' }}"
                                 data-fixed-location="{{ m.location_label or '' }}"
+                                data-fixed-location-url="{{ m.location_url or '' }}"
                                 {% if not opponent_phone %}disabled title="El oponente no tiene número registrado"{% endif %}>
                                 Notificar por WhatsApp
                             </button>
@@ -184,14 +178,8 @@
                                 <label for="admin_datetime_{{ m.id }}">Fecha y hora</label>
                                 <input type="datetime-local" id="admin_datetime_{{ m.id }}" name="proposed_datetime" class="form-control" required>
                             </div>
-                            <div class="form-group">
-                                <label for="admin_location_{{ m.id }}">Lugar <span class="form-label-optional">(opcional)</span></label>
-                                <input type="text" id="admin_location_{{ m.id }}" name="location_label" class="form-control">
-                            </div>
-                            <div class="form-group">
-                                <label for="admin_maps_{{ m.id }}">URL Google Maps <span class="form-label-optional">(opcional)</span></label>
-                                <input type="url" id="admin_maps_{{ m.id }}" name="location_url" class="form-control">
-                            </div>
+                            {% set prefix = 'admin_' ~ m.id %}
+                            {% include "partials/match_location_picker.html" %}
                             <button type="submit" class="btn btn-secondary btn-sm">Confirmar como admin</button>
                         </form>
                     </div>

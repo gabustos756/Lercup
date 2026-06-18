@@ -611,6 +611,33 @@ body > header {
     text-decoration: underline;
 }
 
+.schedule-map-link--muted {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.match-location-links {
+    margin-top: 0.35rem;
+}
+
+/* Location picker (Google Maps links, no API key) */
+.location-picker-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.location-picker-preview {
+    display: inline-block;
+    margin-top: 0.25rem;
+}
+
+.location-picker-url-group {
+    margin-bottom: 0.5rem;
+}
+
 .status-message {
     display: inline-flex;
     align-items: center;

@@ -155,18 +155,8 @@
                                             <p class="proposal-label-hint">Dentro del rango del torneo: {{ m.tournament_start.strftime('%d/%m/%Y') }} – {{ m.tournament_end.strftime('%d/%m/%Y') }}</p>
                                         {% endif %}
                                     </div>
-                                    <div class="form-group">
-                                        <label for="location_label_{{ match.id }}">
-                                            Lugar <span class="form-label-optional">(opcional)</span>
-                                        </label>
-                                        <input type="text" id="location_label_{{ match.id }}" name="location_label" class="form-control proposal-location-input" placeholder="Ej: Cancha 3, Club Laler">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="location_url_{{ match.id }}">
-                                            URL Google Maps <span class="form-label-optional">(opcional)</span>
-                                        </label>
-                                        <input type="url" id="location_url_{{ match.id }}" name="location_url" class="form-control" placeholder="https://maps.google.com/...">
-                                    </div>
+                                    {% set prefix = match.id %}
+                                    {% include "partials/match_location_picker.html" %}
                                     <div class="match-action-row">
                                         <button type="submit" class="btn btn-primary btn-sm">Confirmar propuesta</button>
                                         <button type="button" class="btn btn-whatsapp btn-sm whatsapp-notify-btn"
@@ -189,9 +179,9 @@
                                             <span><strong>{{ match.location_label }}</strong></span>
                                         </div>
                                     {% endif %}
-                                    {% if match.location_url %}
-                                        <a href="{{ match.location_url }}" target="_blank" rel="noopener noreferrer" class="schedule-map-link">Ver en Google Maps ↗</a>
-                                    {% endif %}
+                                    {% set loc_label = match.location_label %}
+                                    {% set loc_url = match.location_url %}
+                                    {% include "partials/match_location_links.html" %}
                                 </div>
                                 <div class="status-message status-message--waiting">
                                     <span class="status-message-icon" aria-hidden="true">🕐</span>
@@ -201,6 +191,7 @@
                                     <button type="button" class="btn btn-whatsapp btn-sm whatsapp-notify-btn"
                                         data-fixed-datetime="{{ match.proposed_datetime.strftime('%Y-%m-%dT%H:%M') }}"
                                         data-fixed-location="{{ match.location_label or '' }}"
+                                        data-fixed-location-url="{{ match.location_url or '' }}"
                                         {% if not m.opponent_phone %}disabled title="El oponente no tiene número registrado"{% endif %}>
                                         Notificar por WhatsApp
                                     </button>
@@ -220,9 +211,9 @@
                                             <span><strong>{{ match.location_label }}</strong></span>
                                         </div>
                                     {% endif %}
-                                    {% if match.location_url %}
-                                        <a href="{{ match.location_url }}" target="_blank" rel="noopener noreferrer" class="schedule-map-link">Ver en Google Maps ↗</a>
-                                    {% endif %}
+                                    {% set loc_label = match.location_label %}
+                                    {% set loc_url = match.location_url %}
+                                    {% include "partials/match_location_links.html" %}
                                 </div>
                                 <div class="match-action-row">
                                     <form method="post" action="/matches/{{ match.id }}/confirm">
@@ -250,9 +241,9 @@
                                             <span><strong>{{ match.location_label }}</strong></span>
                                         </div>
                                     {% endif %}
-                                    {% if match.location_url %}
-                                        <a href="{{ match.location_url }}" target="_blank" rel="noopener noreferrer" class="schedule-map-link">Ver en Google Maps ↗</a>
-                                    {% endif %}
+                                    {% set loc_label = match.location_label %}
+                                    {% set loc_url = match.location_url %}
+                                    {% include "partials/match_location_links.html" %}
                                 </div>
                             {% endif %}
 
@@ -266,6 +257,9 @@
                                     {% if match.location_label %}
                                         <div class="schedule-highlight-location"><span>📍 {{ match.location_label }}</span></div>
                                     {% endif %}
+                                    {% set loc_label = match.location_label %}
+                                    {% set loc_url = match.location_url %}
+                                    {% include "partials/match_location_links.html" %}
                                 </div>
                             {% elif match.match_status == 'proposed' and match.proposed_datetime %}
                                 <div class="schedule-highlight" style="margin-top: 0.75rem;">
@@ -273,6 +267,12 @@
                                         <span class="date-part">{{ match.proposed_datetime.strftime('%d/%m/%Y') }}</span>
                                         <span class="time-part">{{ match.proposed_datetime.strftime('%H:%M') }} hs</span>
                                     </div>
+                                    {% if match.location_label %}
+                                        <div class="schedule-highlight-location"><span>📍 {{ match.location_label }}</span></div>
+                                    {% endif %}
+                                    {% set loc_label = match.location_label %}
+                                    {% set loc_url = match.location_url %}
+                                    {% include "partials/match_location_links.html" %}
                                 </div>
                             {% endif %}
                         {% endif %}
