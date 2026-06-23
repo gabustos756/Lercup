@@ -1,0 +1,38 @@
+{# panel_uid, m, return_url, admin_datetime_value, value_label, value_url #}
+<form method="post" action="/matches/{{ m.id }}/admin-update" class="match-admin-form">
+    <input type="hidden" name="return_url" value="{{ return_url }}">
+    <div class="form-group">
+        <label for="admin_datetime_{{ panel_uid }}">Fecha y hora</label>
+        <input type="datetime-local"
+               id="admin_datetime_{{ panel_uid }}"
+               name="proposed_datetime"
+               class="form-control"
+               value="{{ admin_datetime_value }}">
+    </div>
+    {% set prefix = 'admin_' ~ panel_uid %}
+    {% include "partials/match_location_picker.html" %}
+    <div class="match-admin-result-grid">
+        <div class="form-group">
+            <label for="admin_winner_{{ panel_uid }}">Ganador</label>
+            <select id="admin_winner_{{ panel_uid }}" name="winner_id" class="form-control">
+                <option value="">Sin resultado</option>
+                <option value="{{ m.player1.id }}" {% if m.winner and m.winner.id == m.player1.id %}selected{% endif %}>
+                    {{ m.player1.full_name }}
+                </option>
+                <option value="{{ m.player2.id }}" {% if m.winner and m.winner.id == m.player2.id %}selected{% endif %}>
+                    {{ m.player2.full_name }}
+                </option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="admin_score_{{ panel_uid }}">Resultado</label>
+            <input type="text"
+                   id="admin_score_{{ panel_uid }}"
+                   name="score"
+                   class="form-control"
+                   placeholder="Ej. 6-4, 7-5"
+                   value="{{ m.score or '' }}">
+        </div>
+    </div>
+    <button type="submit" class="btn btn-secondary btn-sm">Guardar cambios</button>
+</form>

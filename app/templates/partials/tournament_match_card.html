@@ -1,5 +1,9 @@
-{# Requires: m, tournament, current_user, jornada_key (optional), show_admin_delete (optional) #}
+{# Requires: m, tournament, current_user, jornada_key (optional), show_admin_delete (optional), panel_uid (optional) #}
 {% set return_url = '/tournaments/detail/' ~ tournament.id %}
+{% if panel_uid is not defined %}
+    {% set panel_uid = 'm-' ~ m.id %}
+{% endif %}
+{% set panel_dom_id = 'match-panel-' ~ panel_uid %}
 {% set match_status = m.match_status or 'pending' %}
 {% set is_player1 = current_user and current_user.id == m.player1_id %}
 {% set is_player2 = current_user and current_user.id == m.player2_id %}
@@ -102,17 +106,19 @@
                     class="match-panel-toggle btn btn-outline btn-sm"
                     aria-expanded="false"
                     {% if jornada_key %}data-jornada-key="{{ jornada_key }}"{% endif %}
-                    data-panel-target="match-panel-{{ m.id }}">
+                    data-panel-target="{{ panel_dom_id }}">
                 {% if show_player_panel and match_status in ['pending', 'rejected'] %}
                     📅 Proponer fecha
                 {% elif show_player_panel and match_status == 'confirmed' %}
                     ✏️ Solicitar cambio
                 {% elif show_player_panel and match_status == 'proposed' and not i_proposed %}
                     📅 Responder solicitud
+                {% elif show_admin_panel and match_status == 'played' %}
+                    ⚙️ Editar partido (admin)
                 {% elif show_admin_panel and match_status == 'proposed' %}
                     ⚙️ Revisar solicitud
                 {% elif show_admin_panel and not show_player_panel %}
-                    ⚙️ Editar fecha (admin)
+                    ⚙️ Gestionar partido (admin)
                 {% else %}
                     ✏️ Editar fecha
                 {% endif %}
@@ -129,7 +135,7 @@
     </div>
 
     {% if show_panel %}
-        <div class="match-panel-body" id="match-panel-{{ m.id }}"
+        <div class="match-panel-body" id="{{ panel_dom_id }}"
              {% if jornada_key %}data-jornada-key="{{ jornada_key }}"{% endif %}>
             <div class="match-panel-inner">
                 {% if show_player_panel %}
@@ -209,18 +215,11 @@
                         </div>
                     {% endif %}
                     <div class="match-admin-panel" {% if show_player_panel %}style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);"{% endif %}>
-                        <p class="match-admin-panel-label">⚙️ Admin — establecer fecha</p>
-                        <form method="post" action="/matches/{{ m.id }}/admin-set">
-                            <input type="hidden" name="return_url" value="{{ return_url }}">
-                            <div class="form-group">
-                                <label for="admin_datetime_{{ m.id }}">Fecha y hora</label>
-                                <input type="datetime-local" id="admin_datetime_{{ m.id }}" name="proposed_datetime" class="form-control" required>
-                            </div>
-                            {% with prefix='admin_' ~ m.id|string %}
-                                {% include "partials/match_location_picker.html" %}
-                            {% endwith %}
-                            <button type="submit" class="btn btn-secondary btn-sm">Confirmar como admin</button>
-                        </form>
+                        <p class="match-admin-panel-label">⚙️ Admin — fecha, lugar y resultado</p>
+                        {% set admin_datetime_value = m.match_date.strftime('%Y-%m-%dT%H:%M') if m.match_date else '' %}
+                        {% set value_label = m.location_label %}
+                        {% set value_url = m.location_url %}
+                        {% include "partials/match_admin_form.html" %}
                     </div>
                 {% endif %}
             </div>

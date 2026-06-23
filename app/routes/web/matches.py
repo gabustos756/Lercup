@@ -7,7 +7,7 @@ from sqlmodel import Session
 
 from app.core.database import get_session
 from app.core.map_utils import normalize_location_fields
-from app.core.security import get_current_user_or_redirect, require_admin
+from app.core.security import get_current_user_or_redirect, require_tournament_admin
 from app.core.templates import flash
 from app.models.user import User
 from app.services import MatchService
@@ -161,6 +161,74 @@ def reject_match_datetime(
     )
 
 
+@router.post("/{match_id}/admin-update")
+def admin_update_match(
+    match_id: int,
+    request: Request,
+    proposed_datetime: Optional[str] = Form(None),
+    location_label: Optional[str] = Form(None),
+    location_url: Optional[str] = Form(None),
+    winner_id: Optional[str] = Form(None),
+    score: Optional[str] = Form(None),
+    return_url: Optional[str] = Form(None),
+    db: Session = Depends(get_session),
+    admin_user: User = Depends(require_tournament_admin),
+):
+    """Admin updates match schedule and/or result from tournament card."""
+    dt = None
+    if proposed_datetime and proposed_datetime.strip():
+        try:
+            dt = datetime.fromisoformat(proposed_datetime)
+        except ValueError:
+            flash(request, "Formato de fecha y hora inválido.", "danger")
+            safe_url = _safe_return_url(return_url)
+            return RedirectResponse(url=safe_url or "/tournaments", status_code=303)
+
+    parsed_winner: Optional[int] = None
+    if winner_id and winner_id.strip():
+        try:
+            parsed_winner = int(winner_id)
+        except ValueError:
+            flash(request, "Ganador inválido.", "danger")
+            safe_url = _safe_return_url(return_url)
+            return RedirectResponse(url=safe_url or "/tournaments", status_code=303)
+
+    if dt is None and parsed_winner is None and not (score and score.strip()):
+        flash(request, "Indicá al menos fecha, ganador o resultado.", "warning")
+        safe_url = _safe_return_url(return_url)
+        return RedirectResponse(url=safe_url or "/tournaments", status_code=303)
+
+    norm_label, norm_url = normalize_location_fields(location_label, location_url)
+
+    try:
+        match = MatchService.admin_update_match(
+            db,
+            match_id,
+            admin_user,
+            proposed_datetime=dt,
+            location_label=norm_label,
+            location_url=norm_url,
+            winner_id=parsed_winner,
+            score=score,
+        )
+        flash(request, "Partido actualizado correctamente.", "success")
+        safe_url = _safe_return_url(return_url)
+        if safe_url:
+            return RedirectResponse(url=safe_url, status_code=303)
+        return _redirect_tournament(match.tournament_id)
+    except HTTPException as exc:
+        flash(request, exc.detail, "danger")
+        safe_url = _safe_return_url(return_url)
+        if safe_url:
+            return RedirectResponse(url=safe_url, status_code=303)
+        from app.models.match import Match
+
+        match = db.get(Match, match_id)
+        if match:
+            return _redirect_tournament(match.tournament_id)
+        return RedirectResponse(url="/tournaments", status_code=303)
+
+
 @router.post("/{match_id}/admin-set")
 def admin_set_match_datetime(
     match_id: int,
@@ -170,7 +238,7 @@ def admin_set_match_datetime(
     location_url: Optional[str] = Form(None),
     return_url: Optional[str] = Form(None),
     db: Session = Depends(get_session),
-    admin_user: User = Depends(require_admin),
+    admin_user: User = Depends(require_tournament_admin),
 ):
     """Admin sets match date directly."""
     try:

@@ -142,6 +142,7 @@
                             <div class="tournament-jornada-matches">
                             {% for m in jornada.matches %}
                                 {% set jornada_key = group_label ~ '-' ~ jornada.number %}
+                                {% set panel_uid = 'j-' ~ group_label ~ '-' ~ jornada.number ~ '-' ~ m.id %}
                                 {% set show_admin_delete = false %}
                                 {% include 'partials/tournament_match_card.html' %}
                             {% endfor %}
@@ -384,6 +385,7 @@
                     {% set show_groups_header = false %}
                 {% endif %}
                 {% set jornada_key = (m.group_label or 'G') ~ '-' ~ (m.jornada_number or m.id) %}
+                {% set panel_uid = 'list-' ~ m.id %}
                 {% set show_admin_delete = true %}
                 {% include 'partials/tournament_match_card.html' %}
             {% endfor %}
@@ -395,6 +397,7 @@
                     {% set show_first_header = false %}
                 {% endif %}
                 {% set jornada_key = 'first-' ~ m.id %}
+                {% set panel_uid = 'list-first-' ~ m.id %}
                 {% set show_admin_delete = true %}
                 {% include 'partials/tournament_match_card.html' %}
             {% endfor %}
@@ -410,6 +413,7 @@
                         {% set show_cup_header = false %}
                     {% endif %}
                     {% set jornada_key = cup_name ~ '-' ~ (m.round_name or m.id) %}
+                    {% set panel_uid = 'list-' ~ cup_name ~ '-' ~ m.id %}
                     {% set show_admin_delete = true %}
                     {% include 'partials/tournament_match_card.html' %}
                 {% endfor %}

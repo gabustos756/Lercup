@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from urllib.parse import urlparse
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -17,6 +18,10 @@ class Settings(BaseSettings):
     ENV: str = "development"
     SECRET_KEY: str = "devsecretkeychangeitpostmvp"
     DATABASE_URL: str = "sqlite:///database.db"
+    APP_BASE_URL: str = "http://127.0.0.1:8000"
+    RESEND_API_KEY: Optional[str] = None
+    EMAIL_FROM: Optional[str] = None
+    PASSWORD_RESET_EXPIRE_MINUTES: int = 60
 
     model_config = SettingsConfigDict(
         env_file=".env",

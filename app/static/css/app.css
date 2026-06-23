@@ -1216,6 +1216,23 @@ input[type="datetime-local"].form-control::-webkit-calendar-picker-indicator:hov
     letter-spacing: 0.03em;
 }
 
+.match-admin-result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+@media (max-width: 520px) {
+    .match-admin-result-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.match-admin-form .btn {
+    margin-top: 0.25rem;
+}
+
 /* Mobile Toggle */
 .menu-toggle {
     display: none;

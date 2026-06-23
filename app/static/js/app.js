@@ -219,7 +219,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. Tournament match panel toggles
     document.querySelectorAll('.match-panel-toggle').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const panelId = btn.dataset.panelTarget;
             const panel = panelId ? document.getElementById(panelId) : null;
             if (!panel) return;

@@ -6,3 +6,4 @@ from app.models.match import Match
 from app.models.tournament_format import TournamentFormat
 from app.models.group_round import GroupRound
 from app.models.notification import Notification
+from app.models.password_reset_token import PasswordResetToken

@@ -372,6 +372,54 @@ class MatchService:
     # ------------------------------------------------------------------
 
     @staticmethod
+    def admin_update_match(
+        db: Session,
+        match_id: int,
+        admin_user: User,
+        proposed_datetime: Optional[datetime] = None,
+        location_label: Optional[str] = None,
+        location_url: Optional[str] = None,
+        winner_id: Optional[int] = None,
+        score: Optional[str] = None,
+    ) -> Match:
+        """Admin updates schedule and/or result on an existing match."""
+        if not MatchService._is_admin(admin_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Se requieren permisos de administrador.",
+            )
+
+        match = MatchService._get_match_or_404(db, match_id)
+
+        if proposed_datetime is not None:
+            match.match_date = proposed_datetime
+            match.proposed_datetime = proposed_datetime
+            if winner_id is None and match.match_status != "played":
+                match.match_status = CONFIRMED_STATUS
+            MatchService._clear_proposal_fields(match)
+
+        if location_label is not None:
+            match.location_label = location_label or None
+        if location_url is not None:
+            match.location_url = location_url or None
+
+        if winner_id is not None:
+            if winner_id not in (match.player1_id, match.player2_id):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El ganador debe ser uno de los jugadores del partido.",
+                )
+            match.winner_id = winner_id
+            if score is not None:
+                match.score = score.strip() or None
+            MatchService.apply_result_status(match, winner_id, match.score)
+
+        elif score is not None:
+            match.score = score.strip() or None
+
+        return MatchService._save_match(db, match)
+
+    @staticmethod
     def admin_set_match_datetime(
         db: Session,
         match_id: int,
@@ -380,28 +428,15 @@ class MatchService:
         location_label: Optional[str] = None,
         location_url: Optional[str] = None,
     ) -> Match:
-        """
-        Admin sets match date directly without tournament range restrictions.
-        Sets match_status to confirmed immediately.
-        """
-        if not MatchService._is_admin(admin_user):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Se requieren permisos de administrador.",
-            )
-
-        match = MatchService._get_match_or_404(db, match_id)
-        MatchService._ensure_not_played(match)
-
-        match.proposed_datetime = proposed_datetime
-        match.proposed_by_id = admin_user.id
-        match.match_date = proposed_datetime
-        match.location_label = location_label
-        match.location_url = location_url
-        MatchService._clear_proposal_fields(match)
-        match.match_status = CONFIRMED_STATUS
-
-        return MatchService._save_match(db, match)
+        """Admin sets match date directly without tournament range restrictions."""
+        return MatchService.admin_update_match(
+            db,
+            match_id,
+            admin_user,
+            proposed_datetime=proposed_datetime,
+            location_label=location_label,
+            location_url=location_url,
+        )
 
     # ------------------------------------------------------------------
     # Result integration (used by TournamentService.add_match)
